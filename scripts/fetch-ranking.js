@@ -116,7 +116,9 @@ async function downloadImage(url, filepath) {
   }
 }
 
-// Create Typefully draft
+// Create Typefully draft (v2 API)
+const TYPEFULLY_SOCIAL_SET_ID = '75309'; // StargazeZone
+
 async function createTypefullyDraft(tweet) {
   if (!TYPEFULLY_API_KEY) {
     console.log('No Typefully API key, skipping draft creation');
@@ -124,21 +126,27 @@ async function createTypefullyDraft(tweet) {
     return;
   }
 
-  const response = await fetch('https://api.typefully.com/v1/drafts/', {
+  const response = await fetch(`https://api.typefully.com/v2/social-sets/${TYPEFULLY_SOCIAL_SET_ID}/drafts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-KEY': TYPEFULLY_API_KEY,
+      'Authorization': `Bearer ${TYPEFULLY_API_KEY}`,
       ...HEADERS
     },
     body: JSON.stringify({
-      content: tweet,
-      threadify: false
+      platforms: {
+        x: {
+          enabled: true,
+          posts: [{ text: tweet }]
+        }
+      }
     })
   });
 
   if (response.ok) {
+    const data = await response.json();
     console.log('Typefully draft created successfully');
+    console.log(`Draft URL: ${data.private_url}`);
   } else {
     console.error('Failed to create Typefully draft:', await response.text());
   }
