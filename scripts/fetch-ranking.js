@@ -37,8 +37,7 @@ async function fetchNFTImage(collectionAddr) {
       tokens(collectionAddr: "${collectionAddr}", limit: 50) {
         tokens {
           tokenId
-          media { url }
-          image { url }
+          imageUrl
         }
       }
     }
@@ -54,17 +53,16 @@ async function fetchNFTImage(collectionAddr) {
     const data = await response.json();
     const tokens = data?.data?.tokens?.tokens || [];
 
-    if (tokens.length === 0) return null;
+    if (tokens.length === 0) {
+      console.log(`No tokens found for ${collectionAddr}`);
+      return null;
+    }
 
     // Pick a random token
     const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
-    const imageUrl = randomToken?.media?.url || randomToken?.image?.url;
+    const imageUrl = randomToken?.imageUrl;
 
-    // Convert IPFS URL to HTTP if needed
-    if (imageUrl?.startsWith('ipfs://')) {
-      return imageUrl.replace('ipfs://', 'https://ipfs.io/ipfs/');
-    }
-
+    console.log(`Found image for token ${randomToken?.tokenId}: ${imageUrl}`);
     return imageUrl;
   } catch (error) {
     console.error(`Error fetching NFT for ${collectionAddr}:`, error.message);
@@ -76,6 +74,10 @@ async function fetchNFTImage(collectionAddr) {
 async function downloadImage(url, filepath) {
   try {
     const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Failed to download ${url}: ${response.status}`);
+      return false;
+    }
     const buffer = await response.arrayBuffer();
     fs.writeFileSync(filepath, Buffer.from(buffer));
     return true;
@@ -135,6 +137,7 @@ The \`images/\` folder contains NFT images from the top collections each week.
 async function main() {
   console.log('Fetching rankings from Metabase...');
   const rankings = await fetchRankings();
+  console.log(`Found ${rankings.length} collections`);
 
   const weekRange = getWeekRange();
   console.log(`Week: ${weekRange.display}`);
@@ -142,6 +145,7 @@ async function main() {
   // Create images folder for this week
   const imagesDir = path.join('images', weekRange.folderName);
   fs.mkdirSync(imagesDir, { recursive: true });
+  console.log(`Created directory: ${imagesDir}`);
 
   // Build tweet and download images
   const medals = ['🥇', '🥈', '🥉'];
@@ -153,21 +157,30 @@ async function main() {
     const twitter = collection.twitter_acct;
     const collectionAddr = collection.collection_addr;
 
+    console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
+
     // Tweet line
     const prefix = i < 3 ? `${medals[i]} ` : '';
     const handle = twitter ? `@${twitter.replace('@', '')}` : name;
     tweetLines.push(`${prefix}${handle}`);
 
     // Download NFT image
-    console.log(`Fetching image for ${name}...`);
     const imageUrl = await fetchNFTImage(collectionAddr);
 
     if (imageUrl) {
-      const ext = imageUrl.split('.').pop()?.split('?')[0] || 'png';
-      const filename = `${i + 1}_${name.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
+      // Get file extension from URL
+      const urlPath = new URL(imageUrl).pathname;
+      const ext = path.extname(urlPath) || '.png';
+      const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `${i + 1}_${safeName}${ext}`;
       const filepath = path.join(imagesDir, filename);
-      await downloadImage(imageUrl, filepath);
-      console.log(`Saved: ${filename}`);
+
+      const success = await downloadImage(imageUrl, filepath);
+      if (success) {
+        console.log(`Saved: ${filename}`);
+      }
+    } else {
+      console.log(`No image found for ${name}`);
     }
   }
 
