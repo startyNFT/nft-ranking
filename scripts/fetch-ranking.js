@@ -45,23 +45,49 @@ async function fetchFallbackTwitter() {
 
     for (const line of lines) {
       if (!line.trim()) continue;
-      // Handle CSV with possible commas in values
-      const match = line.match(/^"?([^",]+)"?,\s*"?([^",]*)"?$/);
-      if (match) {
-        const collectionName = match[1].trim();
-        const twitter = match[2].trim();
+      // Handle CSV - split by comma, handle quotes
+      const parts = line.split(',');
+      if (parts.length >= 2) {
+        // Clean up: remove quotes, trim spaces, normalize whitespace
+        const collectionName = parts[0].replace(/"/g, '').trim().replace(/\s+/g, ' ');
+        const twitter = parts.slice(1).join(',').replace(/"/g, '').trim().replace(/\s+/g, '').replace('@', '');
+
         if (collectionName && twitter) {
-          fallbackMap[collectionName] = twitter.replace('@', '');
+          // Store with normalized name for flexible matching
+          fallbackMap[collectionName] = twitter;
+          // Also store lowercase version for case-insensitive matching
+          fallbackMap[collectionName.toLowerCase()] = twitter;
         }
       }
     }
 
-    console.log(`Loaded ${Object.keys(fallbackMap).length} fallback Twitter handles from Google Sheet`);
+    console.log(`Loaded ${Object.keys(fallbackMap).length / 2} fallback Twitter handles from Google Sheet`);
     return fallbackMap;
   } catch (error) {
     console.error('Error fetching fallback sheet:', error.message);
     return {};
   }
+}
+
+// Look up Twitter in fallback map (flexible matching)
+function lookupFallbackTwitter(fallbackMap, collectionName) {
+  // Try exact match first
+  if (fallbackMap[collectionName]) {
+    return fallbackMap[collectionName];
+  }
+  // Try case-insensitive match
+  if (fallbackMap[collectionName.toLowerCase()]) {
+    return fallbackMap[collectionName.toLowerCase()];
+  }
+  // Try with normalized whitespace
+  const normalized = collectionName.trim().replace(/\s+/g, ' ');
+  if (fallbackMap[normalized]) {
+    return fallbackMap[normalized];
+  }
+  if (fallbackMap[normalized.toLowerCase()]) {
+    return fallbackMap[normalized.toLowerCase()];
+  }
+  return null;
 }
 
 // Query GraphQL
@@ -300,10 +326,13 @@ async function main() {
       source = 'Creator Stargaze Name';
     }
 
-    if (!twitter && fallbackTwitter[name]) {
-      twitter = fallbackTwitter[name];
-      source = 'Google Sheet fallback';
-      console.log(`  Found in Google Sheet fallback: ${twitter}`);
+    if (!twitter) {
+      const fallbackHandle = lookupFallbackTwitter(fallbackTwitter, name);
+      if (fallbackHandle) {
+        twitter = fallbackHandle;
+        source = 'Google Sheet fallback';
+        console.log(`  Found in Google Sheet fallback: ${twitter}`);
+      }
     }
 
     if (twitter) {
