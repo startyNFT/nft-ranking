@@ -34,6 +34,68 @@ async function fetchRankings() {
   return data.slice(0, 9); // Top 9
 }
 
+// Query GraphQL
+async function queryGraphQL(query) {
+  try {
+    const response = await fetch(STARGAZE_GRAPHQL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...HEADERS
+      },
+      body: JSON.stringify({ query })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('GraphQL error:', error.message);
+    return null;
+  }
+}
+
+// Get creator's Twitter from Stargaze Name
+async function getCreatorTwitter(collectionAddr) {
+  // First get the creator's address
+  const collectionQuery = `{
+    collection(address: "${collectionAddr}") {
+      creator { address }
+    }
+  }`;
+
+  const collectionData = await queryGraphQL(collectionQuery);
+  const creatorAddr = collectionData?.data?.collection?.creator?.address;
+
+  if (!creatorAddr) {
+    console.log(`  No creator found for collection`);
+    return null;
+  }
+
+  console.log(`  Creator address: ${creatorAddr}`);
+
+  // Now check if creator has a Stargaze Name with Twitter
+  const nameQuery = `{
+    names(associatedAddr: "${creatorAddr}") {
+      names {
+        name
+        records { name value }
+      }
+    }
+  }`;
+
+  const nameData = await queryGraphQL(nameQuery);
+  const names = nameData?.data?.names?.names || [];
+
+  for (const name of names) {
+    const twitterRecord = name.records?.find(r => r.name === 'twitter');
+    if (twitterRecord) {
+      console.log(`  Found Twitter from creator's Stargaze Name: ${twitterRecord.value}`);
+      return twitterRecord.value;
+    }
+  }
+
+  console.log(`  No Twitter found for creator`);
+  return null;
+}
+
 // Fetch random NFT image from a collection
 async function fetchNFTImage(collectionAddr) {
   const query = `
@@ -48,16 +110,7 @@ async function fetchNFTImage(collectionAddr) {
   `;
 
   try {
-    const response = await fetch(STARGAZE_GRAPHQL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...HEADERS
-      },
-      body: JSON.stringify({ query })
-    });
-
-    const data = await response.json();
+    const data = await queryGraphQL(query);
     const tokens = data?.data?.tokens?.tokens || [];
 
     if (tokens.length === 0) {
@@ -193,22 +246,77 @@ async function main() {
   }
   console.log(`Using directory: ${imagesDir}`);
 
+  // First pass: collect Twitter handles and look up missing ones
+  console.log('\n--- Resolving Twitter handles ---');
+  const collectionData = [];
+
+  for (const collection of rankings) {
+    const name = collection.name;
+    const collectionAddr = collection.collection_addr;
+    let twitter = collection.twitter_acct;
+
+    console.log(`\n${name}:`);
+
+    // If no Twitter from Metabase, try to get from creator's Stargaze Name
+    if (!twitter) {
+      console.log(`  No Twitter in Metabase, checking creator...`);
+      twitter = await getCreatorTwitter(collectionAddr);
+    } else {
+      console.log(`  Twitter from Metabase: ${twitter}`);
+    }
+
+    collectionData.push({
+      name,
+      collectionAddr,
+      twitter: twitter ? twitter.replace('@', '') : null
+    });
+  }
+
+  // Detect duplicate handles
+  const handleCounts = {};
+  for (const c of collectionData) {
+    if (c.twitter) {
+      handleCounts[c.twitter] = (handleCounts[c.twitter] || 0) + 1;
+    }
+  }
+
+  const duplicateHandles = new Set(
+    Object.entries(handleCounts)
+      .filter(([_, count]) => count > 1)
+      .map(([handle]) => handle)
+  );
+
+  if (duplicateHandles.size > 0) {
+    console.log(`\nDuplicate handles detected: ${[...duplicateHandles].join(', ')}`);
+  }
+
   // Build tweet and download images
+  console.log('\n--- Building tweet and downloading images ---');
   const medals = ['🥇', '🥈', '🥉'];
   let tweetLines = ['Stargaze Weekly Top Volume 💫', '', 'Congratulations:', ''];
 
-  for (let i = 0; i < rankings.length; i++) {
-    const collection = rankings[i];
-    const name = collection.name;
-    const twitter = collection.twitter_acct;
-    const collectionAddr = collection.collection_addr;
+  for (let i = 0; i < collectionData.length; i++) {
+    const { name, collectionAddr, twitter } = collectionData[i];
 
-    console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
+    console.log(`\nProcessing ${i + 1}. ${name}`);
 
     // Tweet line
     const prefix = i < 3 ? `${medals[i]} ` : '';
-    const handle = twitter ? `@${twitter.replace('@', '')}` : name;
-    tweetLines.push(`${prefix}${handle}`);
+    let displayText;
+
+    if (twitter) {
+      // If this handle is duplicated, add collection name
+      if (duplicateHandles.has(twitter)) {
+        displayText = `@${twitter} (${name})`;
+      } else {
+        displayText = `@${twitter}`;
+      }
+    } else {
+      // No Twitter handle, use collection name
+      displayText = name;
+    }
+
+    tweetLines.push(`${prefix}${displayText}`);
 
     // Download NFT image
     const imageUrl = await fetchNFTImage(collectionAddr);
