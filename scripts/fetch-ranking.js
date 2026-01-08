@@ -3,6 +3,7 @@ const path = require('path');
 
 const METABASE_URL = 'https://metabase.stargaze-apis.com/public/question/9d4643d8-1cdc-430c-9865-8978a202862c.json';
 const STARGAZE_GRAPHQL = 'https://graphql.mainnet.stargaze-apis.com/graphql';
+const FALLBACK_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1hM8VEI5gmp4SUcXrZ3NzA71EzMgeesNSrRqqHtFK69g/export?format=csv';
 const TYPEFULLY_API_KEY = process.env.TYPEFULLY_API_KEY;
 
 const HEADERS = {
@@ -32,6 +33,35 @@ async function fetchRankings() {
   const response = await fetch(METABASE_URL, { headers: HEADERS });
   const data = await response.json();
   return data.slice(0, 9); // Top 9
+}
+
+// Fetch fallback Twitter handles from Google Sheet
+async function fetchFallbackTwitter() {
+  try {
+    const response = await fetch(FALLBACK_SHEET_URL, { headers: HEADERS });
+    const csv = await response.text();
+    const lines = csv.split('\n').slice(1); // Skip header row
+    const fallbackMap = {};
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      // Handle CSV with possible commas in values
+      const match = line.match(/^"?([^",]+)"?,\s*"?([^",]*)"?$/);
+      if (match) {
+        const collectionName = match[1].trim();
+        const twitter = match[2].trim();
+        if (collectionName && twitter) {
+          fallbackMap[collectionName] = twitter.replace('@', '');
+        }
+      }
+    }
+
+    console.log(`Loaded ${Object.keys(fallbackMap).length} fallback Twitter handles from Google Sheet`);
+    return fallbackMap;
+  } catch (error) {
+    console.error('Error fetching fallback sheet:', error.message);
+    return {};
+  }
 }
 
 // Query GraphQL
@@ -246,6 +276,9 @@ async function main() {
   }
   console.log(`Using directory: ${imagesDir}`);
 
+  // Load fallback Twitter handles from Google Sheet
+  const fallbackTwitter = await fetchFallbackTwitter();
+
   // First pass: collect Twitter handles and look up missing ones
   console.log('\n--- Resolving Twitter handles ---');
   const collectionData = [];
@@ -254,15 +287,29 @@ async function main() {
     const name = collection.name;
     const collectionAddr = collection.collection_addr;
     let twitter = collection.twitter_acct;
+    let source = 'Metabase';
 
     console.log(`\n${name}:`);
 
-    // If no Twitter from Metabase, try to get from creator's Stargaze Name
-    if (!twitter) {
+    // Priority: 1. Metabase, 2. Creator's Stargaze Name, 3. Google Sheet fallback
+    if (twitter) {
+      console.log(`  Twitter from Metabase: ${twitter}`);
+    } else {
       console.log(`  No Twitter in Metabase, checking creator...`);
       twitter = await getCreatorTwitter(collectionAddr);
+      source = 'Creator Stargaze Name';
+    }
+
+    if (!twitter && fallbackTwitter[name]) {
+      twitter = fallbackTwitter[name];
+      source = 'Google Sheet fallback';
+      console.log(`  Found in Google Sheet fallback: ${twitter}`);
+    }
+
+    if (twitter) {
+      console.log(`  Final Twitter: @${twitter} (source: ${source})`);
     } else {
-      console.log(`  Twitter from Metabase: ${twitter}`);
+      console.log(`  No Twitter found - will use collection name`);
     }
 
     collectionData.push({
