@@ -180,10 +180,18 @@ async function main() {
   const weekRange = getWeekRange();
   console.log(`Week: ${weekRange.display}`);
 
-  // Create images folder for this week
-  const imagesDir = path.join('images', weekRange.folderName);
-  fs.mkdirSync(imagesDir, { recursive: true });
-  console.log(`Created directory: ${imagesDir}`);
+  // Clear and use images folder directly
+  const imagesDir = 'images';
+
+  // Remove old images (keep .gitkeep)
+  const existingFiles = fs.readdirSync(imagesDir);
+  for (const file of existingFiles) {
+    if (file !== '.gitkeep') {
+      fs.unlinkSync(path.join(imagesDir, file));
+      console.log(`Removed old file: ${file}`);
+    }
+  }
+  console.log(`Using directory: ${imagesDir}`);
 
   // Build tweet and download images
   const medals = ['🥇', '🥈', '🥉'];
