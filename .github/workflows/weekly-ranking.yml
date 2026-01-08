@@ -1,0 +1,36 @@
+name: Weekly NFT Ranking
+
+on:
+  schedule:
+    # Runs every Tuesday at 1:00 AM UTC (after Monday ends)
+    - cron: '0 1 * * 2'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-ranking:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install node-fetch@3
+
+      - name: Fetch rankings and images
+        env:
+          TYPEFULLY_API_KEY: ${{ secrets.TYPEFULLY_API_KEY }}
+        run: node scripts/fetch-ranking.js
+
+      - name: Commit and push images
+        run: |
+          git config user.name "Stargaze Automation"
+          git config user.email "automation@stargaze.zone"
+          git add -A
+          git diff --staged --quiet || git commit -m "Update weekly ranking - $(date +'%Y-%m-%d')"
+          git push
