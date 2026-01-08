@@ -317,22 +317,22 @@ async function main() {
 
     console.log(`\n${name}:`);
 
-    // Priority: 1. Metabase, 2. Creator's Stargaze Name, 3. Google Sheet fallback
+    // Priority: 1. Metabase, 2. Google Sheet, 3. Creator's Stargaze Name
     if (twitter) {
       console.log(`  Twitter from Metabase: ${twitter}`);
     } else {
-      console.log(`  No Twitter in Metabase, checking creator...`);
-      twitter = await getCreatorTwitter(collectionAddr);
-      source = 'Creator Stargaze Name';
+      const sheetHandle = lookupFallbackTwitter(fallbackTwitter, name);
+      if (sheetHandle) {
+        twitter = sheetHandle;
+        source = 'Google Sheet';
+        console.log(`  Found in Google Sheet: ${twitter}`);
+      }
     }
 
     if (!twitter) {
-      const fallbackHandle = lookupFallbackTwitter(fallbackTwitter, name);
-      if (fallbackHandle) {
-        twitter = fallbackHandle;
-        source = 'Google Sheet fallback';
-        console.log(`  Found in Google Sheet fallback: ${twitter}`);
-      }
+      console.log(`  No Twitter in Metabase/Sheet, checking creator...`);
+      twitter = await getCreatorTwitter(collectionAddr);
+      source = 'Creator Stargaze Name';
     }
 
     if (twitter) {
