@@ -5,6 +5,10 @@ const METABASE_URL = 'https://metabase.stargaze-apis.com/public/question/9d4643d
 const STARGAZE_GRAPHQL = 'https://graphql.mainnet.stargaze-apis.com/graphql';
 const TYPEFULLY_API_KEY = process.env.TYPEFULLY_API_KEY;
 
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; StargazeBot/1.0)'
+};
+
 // Get date range for the week (Tuesday to Monday)
 function getWeekRange() {
   const now = new Date();
@@ -25,7 +29,7 @@ function getWeekRange() {
 
 // Fetch rankings from Metabase
 async function fetchRankings() {
-  const response = await fetch(METABASE_URL);
+  const response = await fetch(METABASE_URL, { headers: HEADERS });
   const data = await response.json();
   return data.slice(0, 9); // Top 9
 }
@@ -46,7 +50,10 @@ async function fetchNFTImage(collectionAddr) {
   try {
     const response = await fetch(STARGAZE_GRAPHQL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...HEADERS
+      },
       body: JSON.stringify({ query })
     });
 
@@ -73,14 +80,36 @@ async function fetchNFTImage(collectionAddr) {
 // Download image and save to disk
 async function downloadImage(url, filepath) {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to download ${url}: ${response.status}`);
-      return false;
+    // Try different IPFS gateways
+    const gateways = [
+      url,
+      url.replace('ipfs-gw.stargaze-apis.com', 'cloudflare-ipfs.com'),
+      url.replace('ipfs-gw.stargaze-apis.com', 'ipfs.io'),
+      url.replace('ipfs-gw.stargaze-apis.com', 'gateway.pinata.cloud')
+    ];
+
+    for (const gatewayUrl of gateways) {
+      try {
+        console.log(`Trying: ${gatewayUrl}`);
+        const response = await fetch(gatewayUrl, {
+          headers: HEADERS,
+          timeout: 10000
+        });
+
+        if (response.ok) {
+          const buffer = await response.arrayBuffer();
+          fs.writeFileSync(filepath, Buffer.from(buffer));
+          console.log(`Downloaded successfully from ${gatewayUrl}`);
+          return true;
+        }
+        console.log(`Failed with status ${response.status}`);
+      } catch (e) {
+        console.log(`Gateway error: ${e.message}`);
+      }
     }
-    const buffer = await response.arrayBuffer();
-    fs.writeFileSync(filepath, Buffer.from(buffer));
-    return true;
+
+    console.error(`All gateways failed for ${url}`);
+    return false;
   } catch (error) {
     console.error(`Error downloading ${url}:`, error.message);
     return false;
@@ -99,7 +128,8 @@ async function createTypefullyDraft(tweet) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-KEY': TYPEFULLY_API_KEY
+      'X-API-KEY': TYPEFULLY_API_KEY,
+      ...HEADERS
     },
     body: JSON.stringify({
       content: tweet,
@@ -170,7 +200,8 @@ async function main() {
     if (imageUrl) {
       // Get file extension from URL
       const urlPath = new URL(imageUrl).pathname;
-      const ext = path.extname(urlPath) || '.png';
+      let ext = path.extname(urlPath) || '.png';
+      if (ext.length > 5) ext = '.png'; // fallback if extension looks wrong
       const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
       const filename = `${i + 1}_${safeName}${ext}`;
       const filepath = path.join(imagesDir, filename);
