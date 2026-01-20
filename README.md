@@ -6,7 +6,7 @@ Automated weekly top volume NFT collections on Stargaze.
 
 The `images/` folder contains NFT images from the top collections each week.
 
-**Current Week:** Jan 6 - Jan 12
+**Current Week:** Jan 13 - Jan 19
 
 ---
 
