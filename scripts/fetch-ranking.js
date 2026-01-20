@@ -377,7 +377,7 @@ async function main() {
     console.log(`\nProcessing ${i + 1}. ${name}`);
 
     // Tweet line
-    const prefix = i < 3 ? `${medals[i]} ` : '';
+    const prefix = i < 3 ? `${medals[i]} ` : '✦ ';
     let displayText;
 
     if (twitter) {
