@@ -174,11 +174,19 @@ async function fetchNFTImage(collectionAddr) {
       return null;
     }
 
-    // Pick a random token
-    const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
-    const imageUrl = randomToken?.imageUrl;
+    // Filter to tokens that have an imageUrl
+    const tokensWithImage = tokens.filter(t => t.imageUrl);
 
-    console.log(`Found image for token ${randomToken?.tokenId}: ${imageUrl}`);
+    if (tokensWithImage.length === 0) {
+      console.log(`No tokens with images found (${tokens.length} tokens checked)`);
+      return null;
+    }
+
+    // Pick a random token from those with images
+    const randomToken = tokensWithImage[Math.floor(Math.random() * tokensWithImage.length)];
+    const imageUrl = randomToken.imageUrl;
+
+    console.log(`Found image for token ${randomToken.tokenId}: ${imageUrl} (${tokensWithImage.length}/${tokens.length} had images)`);
     return imageUrl;
   } catch (error) {
     console.error(`Error fetching NFT for ${collectionAddr}:`, error.message);
