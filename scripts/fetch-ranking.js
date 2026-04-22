@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const METABASE_URL = 'https://metabase.stargaze-apis.com/public/question/9d4643d8-1cdc-430c-9865-8978a202862c.json';
-const STARGAZE_GRAPHQL = 'https://graphql.mainnet.stargaze-apis.com/graphql';
-const FALLBACK_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1hM8VEI5gmp4SUcXrZ3NzA71EzMgeesNSrRqqHtFK69g/export?format=csv';
+const HUB_INDEXER = 'https://marketplace-api.cosmos.stargaze-apis.com';
+// Optional local file mapping collection name (case-insensitive) -> twitter handle.
+// Format: { "Bad Kids": "badkidsnft", ... }. Missing file is fine — tweets will
+// fall back to the collection name.
+const HANDLES_FILE = path.join(__dirname, '..', 'handles.json');
 const TYPEFULLY_API_KEY = process.env.TYPEFULLY_API_KEY;
 
 const HEADERS = {
@@ -28,182 +30,140 @@ function getWeekRange() {
   };
 }
 
-// Fetch rankings from Metabase
+// Fetch top weekly volume collections from the Cosmos Hub indexer (Fusion indexer).
+// Returns items with { name, collection_addr, twitter_acct }. twitter_acct is
+// looked up in the optional handles.json file — missing entries fall back to name.
 async function fetchRankings() {
-  const response = await fetch(METABASE_URL, { headers: HEADERS });
+  const url = `${HUB_INDEXER}/api/v1/collections?limit=9&offset=0&sort=volume7d:desc`;
+  const response = await fetch(url, { headers: HEADERS });
+  if (!response.ok) throw new Error(`Hub indexer error: ${response.status}`);
   const data = await response.json();
-  return data.slice(0, 9); // Top 9
+  const collections = data?.collections || [];
+
+  const handleMap = loadHandleMap();
+
+  return collections.map((c) => ({
+    name: c.name,
+    collection_addr: c.contractAddress,
+    twitter_acct: handleMap.get(c.name?.toLowerCase()) || null,
+  }));
 }
 
-// Fetch fallback Twitter handles from Google Sheet
-async function fetchFallbackTwitter() {
+function loadHandleMap() {
+  const map = new Map();
+  if (!fs.existsSync(HANDLES_FILE)) return map;
   try {
-    const response = await fetch(FALLBACK_SHEET_URL, { headers: HEADERS });
-    const csv = await response.text();
-    const lines = csv.split('\n').slice(1); // Skip header row
-    const fallbackMap = {};
-
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      // Handle CSV - split by comma, handle quotes
-      const parts = line.split(',');
-      if (parts.length >= 2) {
-        // Clean up: remove quotes, trim spaces, normalize whitespace
-        const collectionName = parts[0].replace(/"/g, '').trim().replace(/\s+/g, ' ');
-        const twitter = parts.slice(1).join(',').replace(/"/g, '').trim().replace(/\s+/g, '').replace('@', '');
-
-        if (collectionName && twitter) {
-          // Store with normalized name for flexible matching
-          fallbackMap[collectionName] = twitter;
-          // Also store lowercase version for case-insensitive matching
-          fallbackMap[collectionName.toLowerCase()] = twitter;
-        }
-      }
+    const raw = JSON.parse(fs.readFileSync(HANDLES_FILE, 'utf8'));
+    for (const [name, handle] of Object.entries(raw)) {
+      if (name && handle) map.set(name.toLowerCase(), handle);
     }
-
-    console.log(`Loaded ${Object.keys(fallbackMap).length / 2} fallback Twitter handles from Google Sheet`);
-    return fallbackMap;
-  } catch (error) {
-    console.error('Error fetching fallback sheet:', error.message);
-    return {};
+    console.log(`Loaded ${map.size} handles from ${HANDLES_FILE}`);
+  } catch (e) {
+    console.log(`handles.json parse failed (${e.message}), continuing without handles`);
   }
+  return map;
 }
 
-// Look up Twitter in fallback map (flexible matching)
-function lookupFallbackTwitter(fallbackMap, collectionName) {
-  // Try exact match first
-  if (fallbackMap[collectionName]) {
-    return fallbackMap[collectionName];
-  }
-  // Try case-insensitive match
-  if (fallbackMap[collectionName.toLowerCase()]) {
-    return fallbackMap[collectionName.toLowerCase()];
-  }
-  // Try with normalized whitespace
-  const normalized = collectionName.trim().replace(/\s+/g, ' ');
-  if (fallbackMap[normalized]) {
-    return fallbackMap[normalized];
-  }
-  if (fallbackMap[normalized.toLowerCase()]) {
-    return fallbackMap[normalized.toLowerCase()];
-  }
-  return null;
-}
-
-// Query GraphQL
-async function queryGraphQL(query) {
-  try {
-    const response = await fetch(STARGAZE_GRAPHQL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...HEADERS
-      },
-      body: JSON.stringify({ query })
-    });
-    return await response.json();
-  } catch (error) {
-    console.error('GraphQL error:', error.message);
-    return null;
-  }
-}
-
-// Get creator's Twitter from Stargaze Name
-async function getCreatorTwitter(collectionAddr) {
-  // First get the creator's address
-  const collectionQuery = `{
-    collection(address: "${collectionAddr}") {
-      creator { address }
-    }
-  }`;
-
-  const collectionData = await queryGraphQL(collectionQuery);
-  const creatorAddr = collectionData?.data?.collection?.creator?.address;
-
-  if (!creatorAddr) {
-    console.log(`  No creator found for collection`);
-    return null;
-  }
-
-  console.log(`  Creator address: ${creatorAddr}`);
-
-  // Now check if creator has a Stargaze Name with Twitter
-  const nameQuery = `{
-    names(associatedAddr: "${creatorAddr}") {
-      names {
-        name
-        records { name value }
-      }
-    }
-  }`;
-
-  const nameData = await queryGraphQL(nameQuery);
-  const names = nameData?.data?.names?.names || [];
-
-  for (const name of names) {
-    const twitterRecord = name.records?.find(r => r.name === 'twitter');
-    if (twitterRecord) {
-      console.log(`  Found Twitter from creator's Stargaze Name: ${twitterRecord.value}`);
-      return twitterRecord.value;
-    }
-  }
-
-  console.log(`  No Twitter found for creator`);
-  return null;
-}
-
-// Fetch random NFT image from a collection
+// Fetch a random NFT image from a Cosmos Hub collection via the indexer.
 async function fetchNFTImage(collectionAddr) {
-  const query = `
-    query {
-      tokens(collectionAddr: "${collectionAddr}", limit: 50) {
-        tokens {
-          tokenId
-          imageUrl
-        }
-      }
-    }
-  `;
-
   try {
-    const data = await queryGraphQL(query);
-    const tokens = data?.data?.tokens?.tokens || [];
+    const url = `${HUB_INDEXER}/api/v1/tokens/${collectionAddr}?limit=50&offset=0&includeAll=true`;
+    const response = await fetch(url, { headers: HEADERS });
+    if (!response.ok) {
+      console.log(`Hub indexer tokens error for ${collectionAddr}: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    const tokens = data?.tokens || [];
 
     if (tokens.length === 0) {
       console.log(`No tokens found for ${collectionAddr}`);
       return null;
     }
 
-    // Filter to tokens that have an imageUrl
-    const tokensWithImage = tokens.filter(t => t.imageUrl);
+    const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
+    const media = randomToken?.media || {};
+    // Prefer the original IPFS URL for best quality; keep fallback/proxied URL
+    // handy because some HTML-based tokens expose their PNG via the proxy.
+    const imageUrl = media.url || media.fallbackUrl;
+    const mediaType = media.type;
+    const mediaUrl = media.url;
 
-    if (tokensWithImage.length === 0) {
-      console.log(`No tokens with images found (${tokens.length} tokens checked)`);
+    if (!imageUrl) {
+      console.log(`Token ${randomToken?.tokenId} has no usable media url`);
       return null;
     }
 
-    // Pick a random token from those with images
-    const randomToken = tokensWithImage[Math.floor(Math.random() * tokensWithImage.length)];
-    const imageUrl = randomToken.imageUrl;
-
-    console.log(`Found image for token ${randomToken.tokenId}: ${imageUrl} (${tokensWithImage.length}/${tokens.length} had images)`);
-    return imageUrl;
+    console.log(`Found image for token ${randomToken?.tokenId}: ${imageUrl} (media type: ${mediaType || 'standard'})`);
+    return { imageUrl, mediaType, mediaUrl };
   } catch (error) {
     console.error(`Error fetching NFT for ${collectionAddr}:`, error.message);
     return null;
   }
 }
 
+// Try IPFS gateways for a given URL. Cosmos Hub indexer media lives on
+// ipfs.rscdn.art; legacy Stargaze links may still point at ipfs-gw.stargaze-apis.com.
+function getGatewayUrls(url) {
+  const candidates = [url];
+  const legacyHosts = ['ipfs.rscdn.art', 'ipfs-gw.stargaze-apis.com'];
+  const fallbacks = ['cloudflare-ipfs.com', 'ipfs.io', 'gateway.pinata.cloud'];
+  for (const legacy of legacyHosts) {
+    if (url.includes(legacy)) {
+      for (const fb of fallbacks) candidates.push(url.replace(legacy, fb));
+    }
+  }
+  return candidates;
+}
+
+// Extract a PNG URL from HTML content (og:image or apple-touch-icon)
+function extractPngFromHtml(html) {
+  // Try og:image — handle both attribute orderings
+  const ogMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+\.png)"/) ||
+                  html.match(/<meta[^>]*content="([^"]+\.png)"[^>]*property="og:image"/);
+  if (ogMatch) return ogMatch[1];
+
+  // Try apple-touch-icon — handle both attribute orderings, prefer 512px
+  const iconMatch = html.match(/<link[^>]*rel="apple-touch-icon"[^>]*href="([^"]+png512[^"]*\.png)"/) ||
+                    html.match(/<link[^>]*href="([^"]+png512[^"]*\.png)"[^>]*rel="apple-touch-icon"/);
+  if (iconMatch) return iconMatch[1];
+
+  // Try any apple-touch-icon png
+  const anyIconMatch = html.match(/<link[^>]*rel="apple-touch-icon"[^>]*href="([^"]+\.png)"/) ||
+                       html.match(/<link[^>]*href="([^"]+\.png)"[^>]*rel="apple-touch-icon"/);
+  if (anyIconMatch) return anyIconMatch[1];
+
+  return null;
+}
+
+// Fetch an HTML media URL and extract the embedded PNG
+async function extractPngFromMediaUrl(mediaUrl) {
+  const gateways = getGatewayUrls(mediaUrl);
+  for (const gatewayUrl of gateways) {
+    try {
+      console.log(`Fetching HTML for PNG extraction: ${gatewayUrl}`);
+      const response = await fetch(gatewayUrl, {
+        headers: HEADERS,
+        signal: AbortSignal.timeout(10000)
+      });
+      if (response.ok) {
+        const html = await response.text();
+        const pngUrl = extractPngFromHtml(html);
+        if (pngUrl) return pngUrl;
+        console.log(`No PNG found in HTML from ${gatewayUrl}`);
+      }
+    } catch (e) {
+      console.log(`HTML fetch error: ${e.message}`);
+    }
+  }
+  return null;
+}
+
 // Download image and save to disk
 async function downloadImage(url, filepath) {
   try {
-    // Try different IPFS gateways
-    const gateways = [
-      url,
-      url.replace('ipfs-gw.stargaze-apis.com', 'cloudflare-ipfs.com'),
-      url.replace('ipfs-gw.stargaze-apis.com', 'ipfs.io'),
-      url.replace('ipfs-gw.stargaze-apis.com', 'gateway.pinata.cloud')
-    ];
+    const gateways = getGatewayUrls(url);
 
     for (const gatewayUrl of gateways) {
       try {
@@ -213,13 +173,41 @@ async function downloadImage(url, filepath) {
           timeout: 10000
         });
 
-        if (response.ok) {
+        if (!response.ok) {
+          console.log(`Failed with status ${response.status}`);
+          continue;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+
+        // If response is HTML, extract the embedded PNG URL and download that instead
+        if (contentType.includes('text/html')) {
+          const html = await response.text();
+          const pngUrl = extractPngFromHtml(html);
+          if (pngUrl) {
+            console.log(`HTML response detected, extracted PNG: ${pngUrl}`);
+            const pngFilepath = filepath.replace(/\.\w+$/, '.png');
+            return await downloadDirectImage(pngUrl, pngFilepath);
+          }
+          console.log(`HTML response but no embedded PNG found`);
+          continue;
+        }
+
+        // If response is SVG, save it but also try to get a PNG version
+        if (contentType.includes('svg')) {
+          console.log(`SVG response detected, saving as SVG`);
           const buffer = await response.arrayBuffer();
-          fs.writeFileSync(filepath, Buffer.from(buffer));
-          console.log(`Downloaded successfully from ${gatewayUrl}`);
+          const svgFilepath = filepath.replace(/\.\w+$/, '.svg');
+          fs.writeFileSync(svgFilepath, Buffer.from(buffer));
+          console.log(`Downloaded SVG from ${gatewayUrl}`);
           return true;
         }
-        console.log(`Failed with status ${response.status}`);
+
+        // Standard image — save directly
+        const buffer = await response.arrayBuffer();
+        fs.writeFileSync(filepath, Buffer.from(buffer));
+        console.log(`Downloaded successfully from ${gatewayUrl}`);
+        return true;
       } catch (e) {
         console.log(`Gateway error: ${e.message}`);
       }
@@ -231,6 +219,30 @@ async function downloadImage(url, filepath) {
     console.error(`Error downloading ${url}:`, error.message);
     return false;
   }
+}
+
+// Download a direct image URL (used for extracted PNGs from HTML)
+async function downloadDirectImage(url, filepath) {
+  const gateways = getGatewayUrls(url);
+  for (const gatewayUrl of gateways) {
+    try {
+      console.log(`Downloading PNG: ${gatewayUrl}`);
+      const response = await fetch(gatewayUrl, {
+        headers: HEADERS,
+        timeout: 10000
+      });
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        fs.writeFileSync(filepath, Buffer.from(buffer));
+        console.log(`Downloaded PNG successfully`);
+        return true;
+      }
+    } catch (e) {
+      console.log(`PNG gateway error: ${e.message}`);
+    }
+  }
+  console.error(`All gateways failed for PNG: ${url}`);
+  return false;
 }
 
 // Create Typefully draft (v2 API)
@@ -273,7 +285,7 @@ async function createTypefullyDraft(tweet) {
 function updateReadme(weekRange) {
   const readme = `# Stargaze NFT Weekly Ranking
 
-Automated weekly top volume NFT collections on Stargaze.
+Automated weekly top volume NFT collections on Stargaze (Cosmos Hub).
 
 ## Images
 
@@ -297,133 +309,67 @@ async function main() {
   const weekRange = getWeekRange();
   console.log(`Week: ${weekRange.display}`);
 
-  // Clear and use images folder directly
-  const imagesDir = 'images';
-
-  // Remove old images (keep .gitkeep)
-  const existingFiles = fs.readdirSync(imagesDir);
-  for (const file of existingFiles) {
-    if (file !== '.gitkeep') {
-      fs.unlinkSync(path.join(imagesDir, file));
-      console.log(`Removed old file: ${file}`);
-    }
-  }
-  console.log(`Using directory: ${imagesDir}`);
-
-  // Load fallback Twitter handles from Google Sheet
-  const fallbackTwitter = await fetchFallbackTwitter();
-
-  // First pass: collect Twitter handles and look up missing ones
-  console.log('\n--- Resolving Twitter handles ---');
-  const collectionData = [];
-
-  for (const collection of rankings) {
-    const name = collection.name;
-    const collectionAddr = collection.collection_addr;
-    let twitter = collection.twitter_acct;
-    let source = 'Metabase';
-
-    console.log(`\n${name}:`);
-
-    // Priority: 1. Metabase, 2. Google Sheet, 3. Creator's Stargaze Name
-    if (twitter) {
-      console.log(`  Twitter from Metabase: ${twitter}`);
-    } else {
-      const sheetHandle = lookupFallbackTwitter(fallbackTwitter, name);
-      if (sheetHandle) {
-        twitter = sheetHandle;
-        source = 'Google Sheet';
-        console.log(`  Found in Google Sheet: ${twitter}`);
-      }
-    }
-
-    if (!twitter) {
-      console.log(`  No Twitter in Metabase/Sheet, checking creator...`);
-      twitter = await getCreatorTwitter(collectionAddr);
-      source = 'Creator Stargaze Name';
-    }
-
-    if (twitter) {
-      console.log(`  Final Twitter: @${twitter} (source: ${source})`);
-    } else {
-      console.log(`  No Twitter found - will use collection name`);
-    }
-
-    collectionData.push({
-      name,
-      collectionAddr,
-      twitter: twitter ? twitter.replace('@', '') : null
-    });
-  }
-
-  // Detect duplicate handles
-  const handleCounts = {};
-  for (const c of collectionData) {
-    if (c.twitter) {
-      handleCounts[c.twitter] = (handleCounts[c.twitter] || 0) + 1;
-    }
-  }
-
-  const duplicateHandles = new Set(
-    Object.entries(handleCounts)
-      .filter(([_, count]) => count > 1)
-      .map(([handle]) => handle)
-  );
-
-  if (duplicateHandles.size > 0) {
-    console.log(`\nDuplicate handles detected: ${[...duplicateHandles].join(', ')}`);
-  }
+  // Create images folder for this week
+  const imagesDir = path.join('images', weekRange.folderName);
+  fs.mkdirSync(imagesDir, { recursive: true });
+  console.log(`Created directory: ${imagesDir}`);
 
   // Build tweet and download images
-  console.log('\n--- Building tweet and downloading images ---');
   const medals = ['🥇', '🥈', '🥉'];
-  let tweetLines = ['Stargaze Weekly Top Volume 💫', '', 'Congratulations:', ''];
+  let tweetLines = ['Stargaze on Cosmos Hub — Weekly Top Volume 💫', '', 'Congratulations:', ''];
 
-  for (let i = 0; i < collectionData.length; i++) {
-    const { name, collectionAddr, twitter } = collectionData[i];
+  for (let i = 0; i < rankings.length; i++) {
+    const collection = rankings[i];
+    const name = collection.name;
+    const twitter = collection.twitter_acct;
+    const collectionAddr = collection.collection_addr;
 
-    console.log(`\nProcessing ${i + 1}. ${name}`);
+    console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
 
     // Tweet line
-    const prefix = i < 3 ? `${medals[i]} ` : '✦ ';
-    let displayText;
-
-    if (twitter) {
-      // If this handle is duplicated, add collection name
-      if (duplicateHandles.has(twitter)) {
-        displayText = `@${twitter} (${name})`;
-      } else {
-        displayText = `@${twitter}`;
-      }
-    } else {
-      // No Twitter handle, use collection name
-      displayText = name;
-    }
-
-    tweetLines.push(`${prefix}${displayText}`);
+    const prefix = i < 3 ? `${medals[i]} ` : '';
+    const handle = twitter ? `@${twitter.replace('@', '')}` : name;
+    tweetLines.push(`${prefix}${handle}`);
 
     // Download NFT image
-    const imageUrl = await fetchNFTImage(collectionAddr);
+    const result = await fetchNFTImage(collectionAddr);
 
-    if (imageUrl) {
-      // Get file extension from URL
-      const urlPath = new URL(imageUrl).pathname;
-      let ext = path.extname(urlPath) || '.png';
-      if (ext.length > 5) ext = '.png'; // fallback if extension looks wrong
+    if (result) {
+      const { imageUrl, mediaType, mediaUrl } = result;
       const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `${i + 1}_${safeName}${ext}`;
-      const filepath = path.join(imagesDir, filename);
+      let success = false;
 
-      const success = await downloadImage(imageUrl, filepath);
+      // For HTML-based NFTs (e.g. Pixel Wizards), fetch the HTML to extract a PNG
+      if (mediaType === 'html' && mediaUrl) {
+        console.log(`HTML media detected, fetching for PNG extraction...`);
+        const pngUrl = await extractPngFromMediaUrl(mediaUrl);
+        if (pngUrl) {
+          const filepath = path.join(imagesDir, `${i + 1}_${safeName}.png`);
+          success = await downloadDirectImage(pngUrl, filepath);
+        }
+      }
+
+      // Fallback: download the imageUrl directly
+      if (!success) {
+        const urlPath = new URL(imageUrl).pathname;
+        let ext = path.extname(urlPath) || '.png';
+        if (ext.length > 5) ext = '.png';
+        const filename = `${i + 1}_${safeName}${ext}`;
+        const filepath = path.join(imagesDir, filename);
+        success = await downloadImage(imageUrl, filepath);
+      }
+
       if (success) {
-        console.log(`Saved: ${filename}`);
+        const base = `${i + 1}_${safeName}`;
+        const saved = fs.readdirSync(imagesDir).find(f => f.startsWith(base));
+        console.log(`Saved: ${saved}`);
       }
     } else {
       console.log(`No image found for ${name}`);
     }
   }
 
-  tweetLines.push('', 'Trade them all at stargaze.zone');
+  tweetLines.push('', 'Trade them all on Cosmos Hub: stargaze.zone');
   const tweet = tweetLines.join('\n');
 
   console.log('\n--- Tweet ---');
