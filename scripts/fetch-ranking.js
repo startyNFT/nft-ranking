@@ -84,11 +84,16 @@ async function fetchNFTImage(collectionAddr) {
 
     const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
     const media = randomToken?.media || {};
-    // Prefer the original IPFS URL for best quality; keep fallback/proxied URL
-    // handy because some HTML-based tokens expose their PNG via the proxy.
-    const imageUrl = media.url || media.fallbackUrl;
     const mediaType = media.type;
     const mediaUrl = media.url;
+    // For non-image media (vector_graphic / video / html), prefer the indexer's
+    // rasterized staticUrl — it returns a real .webp snapshot. Falls back to
+    // the original IPFS url for plain images.
+    const staticUrl = media?.visualAssets?.xl?.staticUrl
+                   || media?.visualAssets?.lg?.staticUrl
+                   || media.fallbackUrl;
+    const isImage = !mediaType || mediaType === 'image';
+    const imageUrl = isImage ? (mediaUrl || staticUrl) : (staticUrl || mediaUrl);
 
     if (!imageUrl) {
       console.log(`Token ${randomToken?.tokenId} has no usable media url`);
@@ -96,7 +101,7 @@ async function fetchNFTImage(collectionAddr) {
     }
 
     console.log(`Found image for token ${randomToken?.tokenId}: ${imageUrl} (media type: ${mediaType || 'standard'})`);
-    return { imageUrl, mediaType, mediaUrl };
+    return { imageUrl, mediaType, mediaUrl, staticUrl, isImage };
   } catch (error) {
     console.error(`Error fetching NFT for ${collectionAddr}:`, error.message);
     return null;
@@ -335,13 +340,23 @@ async function main() {
     const result = await fetchNFTImage(collectionAddr);
 
     if (result) {
-      const { imageUrl, mediaType, mediaUrl } = result;
+      const { imageUrl, mediaType, mediaUrl, staticUrl, isImage } = result;
       const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
       let success = false;
 
-      // For HTML-based NFTs (e.g. Pixel Wizards), fetch the HTML to extract a PNG
-      if (mediaType === 'html' && mediaUrl) {
-        console.log(`HTML media detected, fetching for PNG extraction...`);
+      // Non-image media (vector_graphic / video / html): use the indexer's
+      // rasterized staticUrl. The proxy encodes output format as f:jpg|webp|png.
+      if (!isImage && staticUrl) {
+        console.log(`Non-image media (${mediaType}), using rasterized staticUrl`);
+        const fmtMatch = staticUrl.match(/\/f:(jpg|jpeg|webp|png)\//);
+        const ext = fmtMatch ? `.${fmtMatch[1] === 'jpeg' ? 'jpg' : fmtMatch[1]}` : '.webp';
+        const filepath = path.join(imagesDir, `${i + 1}_${safeName}${ext}`);
+        success = await downloadDirectImage(staticUrl, filepath);
+      }
+
+      // HTML-specific fallback: extract og:image / apple-touch-icon from the page
+      if (!success && mediaType === 'html' && mediaUrl) {
+        console.log(`HTML media, attempting og:image extraction...`);
         const pngUrl = await extractPngFromMediaUrl(mediaUrl);
         if (pngUrl) {
           const filepath = path.join(imagesDir, `${i + 1}_${safeName}.png`);
@@ -349,7 +364,8 @@ async function main() {
         }
       }
 
-      // Fallback: download the imageUrl directly
+      // Final fallback: download imageUrl directly (handles plain images and
+      // catches anything the prior paths missed)
       if (!success) {
         const urlPath = new URL(imageUrl).pathname;
         let ext = path.extname(urlPath) || '.png';
