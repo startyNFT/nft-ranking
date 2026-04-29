@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 const HUB_INDEXER = 'https://marketplace-api.cosmos.stargaze-apis.com';
 // Optional local file mapping collection name (case-insensitive) -> twitter handle.
@@ -198,14 +199,21 @@ async function downloadImage(url, filepath) {
           continue;
         }
 
-        // If response is SVG, save it but also try to get a PNG version
+        // If response is SVG, rasterize to PNG with sharp
         if (contentType.includes('svg')) {
-          console.log(`SVG response detected, saving as SVG`);
-          const buffer = await response.arrayBuffer();
-          const svgFilepath = filepath.replace(/\.\w+$/, '.svg');
-          fs.writeFileSync(svgFilepath, Buffer.from(buffer));
-          console.log(`Downloaded SVG from ${gatewayUrl}`);
-          return true;
+          console.log(`SVG response detected, rasterizing to PNG`);
+          const buffer = Buffer.from(await response.arrayBuffer());
+          const pngFilepath = filepath.replace(/\.\w+$/, '.png');
+          try {
+            await sharp(buffer, { density: 300 }).resize(1024, 1024, { fit: 'inside' }).png().toFile(pngFilepath);
+            console.log(`Rasterized SVG to PNG`);
+            return true;
+          } catch (e) {
+            console.error(`SVG rasterize failed: ${e.message}, falling back to .svg`);
+            const svgFilepath = filepath.replace(/\.\w+$/, '.svg');
+            fs.writeFileSync(svgFilepath, buffer);
+            return true;
+          }
         }
 
         // Standard image — save directly
@@ -345,13 +353,22 @@ async function main() {
       let success = false;
 
       // Non-image media (vector_graphic / video / html): use the indexer's
-      // rasterized staticUrl. The proxy encodes output format as f:jpg|webp|png.
+      // rasterized staticUrl, then re-encode to PNG locally. The proxy URL is
+      // signed so we can't ask it for a different format.
       if (!isImage && staticUrl) {
         console.log(`Non-image media (${mediaType}), using rasterized staticUrl`);
-        const fmtMatch = staticUrl.match(/\/f:(jpg|jpeg|webp|png)\//);
-        const ext = fmtMatch ? `.${fmtMatch[1] === 'jpeg' ? 'jpg' : fmtMatch[1]}` : '.webp';
-        const filepath = path.join(imagesDir, `${i + 1}_${safeName}${ext}`);
-        success = await downloadDirectImage(staticUrl, filepath);
+        const tmpPath = path.join(imagesDir, `${i + 1}_${safeName}.tmp`);
+        const finalPath = path.join(imagesDir, `${i + 1}_${safeName}.png`);
+        if (await downloadDirectImage(staticUrl, tmpPath)) {
+          try {
+            await sharp(tmpPath).png().toFile(finalPath);
+            fs.unlinkSync(tmpPath);
+            success = true;
+          } catch (e) {
+            console.error(`PNG re-encode failed: ${e.message}`);
+            fs.unlinkSync(tmpPath);
+          }
+        }
       }
 
       // HTML-specific fallback: extract og:image / apple-touch-icon from the page
