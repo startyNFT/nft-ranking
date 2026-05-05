@@ -340,7 +340,7 @@ async function main() {
     console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
 
     // Tweet line
-    const prefix = i < 3 ? `${medals[i]} ` : '';
+    const prefix = i < 3 ? `${medals[i]} ` : '✦ ';
     const handle = twitter ? `@${twitter.replace('@', '')}` : name;
     tweetLines.push(`${prefix}${handle}`);
 
@@ -402,7 +402,7 @@ async function main() {
     }
   }
 
-  tweetLines.push('', 'Trade them all on Cosmos Hub: stargaze.zone');
+  tweetLines.push('', 'Trade them all on the Cosmos Hub: stargaze.zone');
   const tweet = tweetLines.join('\n');
 
   console.log('\n--- Tweet ---');
