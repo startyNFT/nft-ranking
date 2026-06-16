@@ -322,6 +322,18 @@ async function main() {
   const weekRange = getWeekRange();
   console.log(`Week: ${weekRange.display}`);
 
+  // Keep ONLY the current week. Previous runs left a dated subfolder per week,
+  // so images/ accumulated every week and anyone pulling the repo had to download
+  // them all. Wipe everything (except .gitkeep) before regenerating this week's set.
+  const imagesRoot = 'images';
+  if (fs.existsSync(imagesRoot)) {
+    for (const entry of fs.readdirSync(imagesRoot)) {
+      if (entry === '.gitkeep') continue;
+      fs.rmSync(path.join(imagesRoot, entry), { recursive: true, force: true });
+      console.log(`Removed previous week: ${entry}`);
+    }
+  }
+
   // Create images folder for this week
   const imagesDir = path.join('images', weekRange.folderName);
   fs.mkdirSync(imagesDir, { recursive: true });
