@@ -1,0 +1,22 @@
+{
+  "name": "nft-ranking-video",
+  "version": "1.0.0",
+  "description": "Remotion 1:1 animation of the Stargaze Weekly Top Volume ranking card",
+  "scripts": {
+    "build-props": "node scripts/build-props.js",
+    "studio": "node scripts/build-props.js && remotion studio",
+    "render": "node scripts/build-props.js && remotion render TopVolume out/weekly-top-volume.mp4 --props=src/_data.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.0"
+  }
+}

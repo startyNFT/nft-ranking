@@ -30,6 +30,27 @@ jobs:
           TYPEFULLY_API_KEY: ${{ secrets.TYPEFULLY_API_KEY }}
         run: node scripts/fetch-ranking.js
 
+      # Render the 1:1 "Weekly Top Volume" animation from this week's covers.
+      # Non-fatal: a video hiccup must never block the image + Typefully draft above.
+      - name: Render weekly video
+        id: video
+        continue-on-error: true
+        run: |
+          # Chrome Headless Shell system libs for ubuntu-latest (24.04). Best-effort.
+          sudo apt-get update -y || true
+          sudo apt-get install -y \
+            libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxkbcommon0 libpango-1.0-0 libcairo2 libcups2 \
+            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 || true
+          cd video
+          npm ci
+          npx remotion browser ensure
+          npm run render
+          # carry the mp4 alongside this week's images so it travels with the commit
+          WEEK_DIR="$(ls -d ../images/*/ | head -1)"
+          cp out/weekly-top-volume.mp4 "${WEEK_DIR}weekly-top-volume.mp4"
+          echo "Rendered to ${WEEK_DIR}weekly-top-volume.mp4"
+
       - name: Commit and push images
         run: |
           git config user.name "Stargaze Automation"

@@ -343,9 +343,15 @@ async function main() {
   const medals = ['🥇', '🥈', '🥉'];
   let tweetLines = ['Stargaze on Cosmos Hub — Weekly Top Volume 💫', '', 'Congratulations:', ''];
 
+  // rank -> exact collection name (with original punctuation), consumed by the
+  // video build (video/scripts/build-props.js) so title overrides match the real
+  // names rather than the punctuation-mangled image filenames.
+  const ranking = {};
+
   for (let i = 0; i < rankings.length; i++) {
     const collection = rankings[i];
     const name = collection.name;
+    ranking[i + 1] = name;
     const twitter = collection.twitter_acct;
     const collectionAddr = collection.collection_addr;
 
@@ -413,6 +419,9 @@ async function main() {
       console.log(`No image found for ${name}`);
     }
   }
+
+  // Persist the rank -> real-name manifest alongside this week's images.
+  fs.writeFileSync(path.join(imagesDir, 'ranking.json'), JSON.stringify(ranking, null, 2));
 
   tweetLines.push('', 'Trade them all on the Cosmos Hub: stargaze.zone');
   const tweet = tweetLines.join('\n');

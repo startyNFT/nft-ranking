@@ -1,0 +1,135 @@
+STARGAZE WEEKLY TOP-VOLUME — TOP 100 COLLECTIONS (by 7d volume)
+Card titles must fit ONE line (~16 chars comfortable). Tell me a short version for any flagged below;
+I add it to names.json. ✔ = already overridden.
+
+  1. Bad Kids                           ok (8)
+  2. Celestine Sloth Society            ✔ mapped → "Celestine Sloths" (16)
+  3. DeFi Geeks                         ok (10)
+  4. DeFi Geeks Survivers               ✔ mapped → "DG Survivors" (12)
+  5. Sparkle Pets                       ok (12)
+  6. Lost Cosmonauts                    ok (15)
+  7. After the Filter                   ok (16)
+  8. GATA Pixels                        ok (11)
+  9. Mad Scientists                     ok (14)
+ 10. Hyperion                           ok (8)
+ 11. Underworld Necropolis              ❌ too long (21)
+ 12. Sneaky People                      ok (13)
+ 13. Helio                              ok (5)
+ 14. Underworld Companions              ❌ too long (21)
+ 15. Colonial Cats                      ok (13)
+ 16. Wandering Whale Sharks             ❌ too long (22)
+ 17. Expedition                         ok (10)
+ 18. 888 Voyager Cats                   ok (16)
+ 19. Clowns 9000                        ok (11)
+ 20. Bluefrens                          ok (9)
+ 21. Bit Kids                           ok (8)
+ 22. Sneaky Animals                     ok (14)
+ 23. Crypto Hamsters                    ok (15)
+ 24. Cats From Outer Space!!! Honorary Collection ❌ too long (44)
+ 25. Kitty Paradise                     ok (14)
+ 26. Stealth Apes                       ok (12)
+ 27. Big Money                          ok (9)
+ 28. Frosty Penguins                    ok (15)
+ 29. Shitmos                            ok (7)
+ 30. Yield Crocs                        ok (11)
+ 31. Onchain OMies                      ok (13)
+ 32. The Space Ape Society              ❌ too long (21)
+ 33. Kosmic Quest - 1st Edition         ❌ too long (26)
+ 34. Grumpy Grans Galore                ⚠ check (19)
+ 35. Drama Queens                       ok (12)
+ 36. WEIRD FRIENDS                      ok (13)
+ 37. Pixel Witches                      ok (13)
+ 38. Stargaze Punks                     ok (14)
+ 39. Stamps                             ok (6)
+ 40. Stealth Wolves                     ok (14)
+ 41. Stealth Ninjas                     ok (14)
+ 42. Spice Agents                       ok (12)
+ 43. Piece of History 2024              ❌ too long (21)
+ 44. 114Shut                            ok (7)
+ 45. Creepy Companions                  ⚠ check (17)
+ 46. Piece of History 2023              ❌ too long (21)
+ 47. Astra Navigator - Rays of the night ❌ too long (35)
+ 48. Frutopia                           ok (8)
+ 49. PengOnes                           ok (8)
+ 50. Stealth Bots                       ok (12)
+ 51. Kujira Hero                        ok (11)
+ 52. PixYield Lion                      ok (13)
+ 53. Stealth Shrooms                    ok (15)
+ 54. After the Filter Year Three Survivor ❌ too long (36)
+ 55. Women of FADA                      ok (13)
+ 56. Stargazers - First Federation      ❌ too long (29)
+ 57. Star Seizures                      ok (13)
+ 58. The Order: A Tale of Hope          ❌ too long (25)
+ 59. Raccoons                           ok (8)
+ 60. Clayaverse: Clay Pals              ❌ too long (21)
+ 61. moonbase: dracula                  ⚠ check (17)
+ 62. FoMo Foxes                         ok (10)
+ 63. frog day                           ok (8)
+ 64. Stargaze Kingdoms: Baddies vs Goodies ❌ too long (37)
+ 65. Starty Adventures                  ⚠ check (17)
+ 66. Market Animal 167                  ⚠ check (17)
+ 67. Market Animal 170                  ⚠ check (17)
+ 68. Segmentation Fault                 ⚠ check (18)
+ 69. The WadSquad                       ok (12)
+ 70. Necrovault Nexus                   ok (16)
+ 71. BabyWadz                           ok (8)
+ 72. $KUJI KIDS                         ok (10)
+ 73. Shrimp Avatars                     ok (14)
+ 74. Analog Patterns                    ok (15)
+ 75. MOO                                ok (3)
+ 76. Steamland                          ok (9)
+ 77. Scraps                             ok (6)
+ 78. Eternals                           ok (8)
+ 79. Stealth Yeti                       ok (12)
+ 80. Market Animal 169                  ⚠ check (17)
+ 81. The Architects                     ok (14)
+ 82. MIAMIGOS                           ok (8)
+ 83. Lava Foxes                         ok (10)
+ 84. The Hungry Series                  ⚠ check (17)
+ 85. Animal Currency                    ok (15)
+ 86. FoMo Ferrets                       ok (12)
+ 87. BitCanna Buddheads                 ⚠ check (18)
+ 88. TSAS Banners                       ok (12)
+ 89. The Forgotten Punks                ⚠ check (19)
+ 90. SG Mascot: Astro                   ok (16)
+ 91. In His Mind                        ok (11)
+ 92. MultiScape Singularity             ❌ too long (22)
+ 93. Acre NFT                           ok (8)
+ 94. Stargaze Kingdoms: Drakari Island  ❌ too long (33)
+ 95. Wizards from the World of Evaldor  ❌ too long (33)
+ 96. Pigeons Aren't Real                ⚠ check (19)
+ 97. Starlit Path                       ok (12)
+ 98. HuaHua Citizens                    ok (15)
+ 99. Migration                          ok (9)
+100. Sausagaze                          ok (9)
+
+========== NEEDS A SHORT NAME (review these) ==========
+ 11. Underworld Necropolis  (21 chars)  -> shorten to: Und. Necropolis
+ 14. Underworld Companions  (21 chars)  -> shorten to: Und. Companions
+ 16. Wandering Whale Sharks  (22 chars)  -> shorten to: Whale Sharks
+ 24. Cats From Outer Space!!! Honorary Collection  (44 chars)  -> shorten to: Cats from Outer
+ 32. The Space Ape Society  (21 chars)  -> shorten to: Space Apes
+ 33. Kosmic Quest - 1st Edition  (26 chars)  -> shorten to: Kosmic Quest
+ 34. Grumpy Grans Galore  (19 chars)  -> shorten to: Grumpy Grans
+ 43. Piece of History 2024  (21 chars)  -> shorten to: History 2024
+ 45. Creepy Companions  (17 chars)  -> shorten to: Creepy Comp.
+ 46. Piece of History 2023  (21 chars)  -> shorten to: History 2023
+ 47. Astra Navigator - Rays of the night  (35 chars)  -> shorten to: Astra Navigator 
+ 54. After the Filter Year Three Survivor  (36 chars)  -> shorten to: ATF Year 3
+ 56. Stargazers - First Federation  (29 chars)  -> shorten to: Stargazers
+ 58. The Order: A Tale of Hope  (25 chars)  -> shorten to: The Order
+ 60. Clayaverse: Clay Pals  (21 chars)  -> shorten to: Clay Pals
+ 61. moonbase: dracula  (17 chars)  -> shorten to: moonbase
+ 64. Stargaze Kingdoms: Baddies vs Goodies  (37 chars)  -> shorten to: SG Kingdoms
+ 65. Starty Adventures  (17 chars)  -> shorten to: Starty Advent.
+ 66. Market Animal 167  (17 chars)  -> shorten to: Mkt Animal 167
+ 67. Market Animal 170  (17 chars)  -> shorten to: Mkt Animal 170
+ 68. Segmentation Fault  (18 chars)  -> shorten to: Segm. Fault 
+ 80. Market Animal 169  (17 chars)  -> shorten to: Mkt Animal 169
+ 84. The Hungry Series  (17 chars)  -> shorten to: Hungry Series
+ 87. BitCanna Buddheads  (18 chars)  -> shorten to: BitCanna
+ 89. The Forgotten Punks  (19 chars)  -> shorten to: Forgotten Punks
+ 92. MultiScape Singularity  (22 chars)  -> shorten to: MultiScape
+ 94. Stargaze Kingdoms: Drakari Island  (33 chars)  -> shorten to: SG Kingdoms
+ 95. Wizards from the World of Evaldor  (33 chars)  -> shorten to: Wiz. from Evaldor
+ 96. Pigeons Aren't Real  (19 chars)  -> shorten to: Pigeons Aren't Real 

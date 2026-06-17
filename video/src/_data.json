@@ -1,0 +1,47 @@
+{
+  "title": "WEEKLY TOP VOLUME",
+  "date": {
+    "month": "June",
+    "day": 17,
+    "ordinal": "th",
+    "year": 2026
+  },
+  "cards": [
+    {
+      "name": "Bad Kids",
+      "image": "cards/1.jpg"
+    },
+    {
+      "name": "Celestine Sloths",
+      "image": "cards/2.png"
+    },
+    {
+      "name": "DG Survivors",
+      "image": "cards/3.jpg"
+    },
+    {
+      "name": "Bit Kids",
+      "image": "cards/4.png"
+    },
+    {
+      "name": "Mad Scientists",
+      "image": "cards/5.png"
+    },
+    {
+      "name": "Lost Cosmonauts",
+      "image": "cards/6.png"
+    },
+    {
+      "name": "DeFi Geeks",
+      "image": "cards/7.jpg"
+    },
+    {
+      "name": "Sparkle Pets",
+      "image": "cards/8.jpeg"
+    },
+    {
+      "name": "After the Filter",
+      "image": "cards/9.jpg"
+    }
+  ]
+}
