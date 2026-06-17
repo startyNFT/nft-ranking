@@ -315,6 +315,16 @@ async function main() {
   // names rather than the punctuation-mangled image filenames.
   const ranking = {};
 
+  // Count twitter handles so shared ones (e.g. two collections both @DeFiGeeksNFT)
+  // can be disambiguated in the tweet with the collection name.
+  const handleCounts = {};
+  for (const c of rankings) {
+    if (c.twitter_acct) {
+      const h = c.twitter_acct.replace('@', '').toLowerCase();
+      handleCounts[h] = (handleCounts[h] || 0) + 1;
+    }
+  }
+
   for (let i = 0; i < rankings.length; i++) {
     const collection = rankings[i];
     const name = collection.name;
@@ -324,9 +334,17 @@ async function main() {
 
     console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
 
-    // Tweet line
+    // Tweet line — when a handle is shared by multiple ranked collections,
+    // append the collection name so each line is unambiguous.
     const prefix = i < 3 ? `${medals[i]} ` : '✦ ';
-    const handle = twitter ? `@${twitter.replace('@', '')}` : name;
+    let handle;
+    if (twitter) {
+      const at = `@${twitter.replace('@', '')}`;
+      const shared = handleCounts[twitter.replace('@', '').toLowerCase()] > 1;
+      handle = shared ? `${at} (${name})` : at;
+    } else {
+      handle = name;
+    }
     tweetLines.push(`${prefix}${handle}`);
 
     // Download NFT image
