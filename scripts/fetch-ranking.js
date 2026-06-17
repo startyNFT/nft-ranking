@@ -7,7 +7,6 @@ const HUB_INDEXER = 'https://marketplace-api.cosmos.stargaze-apis.com';
 // Format: { "Bad Kids": "badkidsnft", ... }. Missing file is fine — tweets will
 // fall back to the collection name.
 const HANDLES_FILE = path.join(__dirname, '..', 'handles.json');
-const TYPEFULLY_API_KEY = process.env.TYPEFULLY_API_KEY;
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; StargazeBot/1.0)'
@@ -258,41 +257,9 @@ async function downloadDirectImage(url, filepath) {
   return false;
 }
 
-// Create Typefully draft (v2 API)
-const TYPEFULLY_SOCIAL_SET_ID = '75309'; // StargazeZone
-
-async function createTypefullyDraft(tweet) {
-  if (!TYPEFULLY_API_KEY) {
-    console.log('No Typefully API key, skipping draft creation');
-    console.log('Tweet content:\n', tweet);
-    return;
-  }
-
-  const response = await fetch(`https://api.typefully.com/v2/social-sets/${TYPEFULLY_SOCIAL_SET_ID}/drafts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${TYPEFULLY_API_KEY}`,
-      ...HEADERS
-    },
-    body: JSON.stringify({
-      platforms: {
-        x: {
-          enabled: true,
-          posts: [{ text: tweet }]
-        }
-      }
-    })
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    console.log('Typefully draft created successfully');
-    console.log(`Draft URL: ${data.private_url}`);
-  } else {
-    console.error('Failed to create Typefully draft:', await response.text());
-  }
-}
+// NOTE: the Typefully draft is created AFTER the video renders, by
+// scripts/post-draft.js, so the rendered video can be attached to it. Here we
+// just persist the tweet text (tweet.txt) for that step to consume.
 
 // Update README with current week info
 function updateReadme(weekRange) {
@@ -430,8 +397,10 @@ async function main() {
   console.log(tweet);
   console.log('-------------\n');
 
-  // Create Typefully draft
-  await createTypefullyDraft(tweet);
+  // Persist the tweet for the post-render draft step (scripts/post-draft.js),
+  // which uploads the rendered video and creates the Typefully draft with it.
+  fs.writeFileSync(path.join(imagesDir, 'tweet.txt'), tweet);
+  console.log(`Wrote ${path.join(imagesDir, 'tweet.txt')}`);
 
   // Update README
   updateReadme(weekRange);

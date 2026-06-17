@@ -26,12 +26,11 @@ jobs:
         run: npm install node-fetch@3
 
       - name: Fetch rankings and images
-        env:
-          TYPEFULLY_API_KEY: ${{ secrets.TYPEFULLY_API_KEY }}
         run: node scripts/fetch-ranking.js
 
       # Render the 1:1 "Weekly Top Volume" animation from this week's covers.
-      # Non-fatal: a video hiccup must never block the image + Typefully draft above.
+      # Non-fatal: a video hiccup must never block the draft/commit below — the
+      # draft step falls back to text-only if the render didn't produce a video.
       - name: Render weekly video
         id: video
         continue-on-error: true
@@ -51,7 +50,15 @@ jobs:
           cp out/weekly-top-volume.mp4 "${WEEK_DIR}weekly-top-volume.mp4"
           echo "Rendered to ${WEEK_DIR}weekly-top-volume.mp4"
 
+      # Create the Typefully DRAFT (never publishes) with the rendered video
+      # attached. Falls back to a text-only draft if the render failed.
+      - name: Create Typefully draft
+        env:
+          TYPEFULLY_API_KEY: ${{ secrets.TYPEFULLY_API_KEY }}
+        run: node scripts/post-draft.js
+
       - name: Commit and push images
+        if: always()
         run: |
           git config user.name "Stargaze Automation"
           git config user.email "automation@stargaze.zone"
