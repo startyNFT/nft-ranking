@@ -51,8 +51,8 @@ async function createDraft(auth, tweet, mediaIds) {
   if (mediaIds && mediaIds.length) post.media_ids = mediaIds;
   const body = JSON.stringify({
     // No publish_at / scheduled_date -> stays an unpublished DRAFT.
+    // No draft_title -> no custom title on the draft.
     platforms: { x: { enabled: true, posts: [post], settings: {} } },
-    draft_title: "Weekly Top Volume",
   });
 
   // Media may still be processing right after upload; retry the draft create.
