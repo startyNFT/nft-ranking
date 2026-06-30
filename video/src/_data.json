@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "June",
-    "day": 23,
-    "ordinal": "rd",
+    "day": 30,
+    "ordinal": "th",
     "year": 2026
   },
   "cards": [
@@ -12,36 +12,36 @@
       "image": "cards/1.jpg"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Mad Scientists",
       "image": "cards/2.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Celestine Sloths",
       "image": "cards/3.png"
     },
     {
-      "name": "Sneaky Animals",
-      "image": "cards/4.jpg"
+      "name": "Lost Cosmonauts",
+      "image": "cards/4.png"
     },
     {
-      "name": "Sausagaze",
-      "image": "cards/5.png"
+      "name": "After the Filter",
+      "image": "cards/5.jpg"
     },
     {
-      "name": "GATA Pixels",
-      "image": "cards/6.png"
+      "name": "Sneaky People",
+      "image": "cards/6.jpg"
     },
     {
-      "name": "Expedition",
-      "image": "cards/7.jpg"
+      "name": "Und. Necropolis",
+      "image": "cards/7.jpeg"
     },
     {
-      "name": "Sin Garden",
+      "name": "Pixel Wizards",
       "image": "cards/8.png"
     },
     {
-      "name": "SUMMON SOMETHING",
-      "image": "cards/9.png"
+      "name": "DG Survivors",
+      "image": "cards/9.jpg"
     }
   ]
 }
