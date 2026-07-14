@@ -2,7 +2,7 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "July",
-    "day": 7,
+    "day": 14,
     "ordinal": "th",
     "year": 2026
   },
@@ -12,36 +12,36 @@
       "image": "cards/1.jpg"
     },
     {
-      "name": "PengOnes",
+      "name": "Celestine Sloths",
       "image": "cards/2.png"
     },
     {
-      "name": "Expedition",
-      "image": "cards/3.jpg"
-    },
-    {
-      "name": "Celestine Sloths",
-      "image": "cards/4.png"
+      "name": "GATA Pixels",
+      "image": "cards/3.png"
     },
     {
       "name": "Mad Scientists",
-      "image": "cards/5.png"
+      "image": "cards/4.png"
     },
     {
       "name": "Und. Necropolis",
-      "image": "cards/6.jpeg"
+      "image": "cards/5.jpeg"
     },
     {
-      "name": "Stamps",
-      "image": "cards/7.jpg"
+      "name": "Migration",
+      "image": "cards/6.png"
     },
     {
-      "name": "GATA Pixels",
-      "image": "cards/8.png"
+      "name": "Horde of The Undead",
+      "image": "cards/7.png"
     },
     {
-      "name": "After the Filter",
-      "image": "cards/9.jpg"
+      "name": "Sneaky Stuff",
+      "image": "cards/8.jpg"
+    },
+    {
+      "name": "Drama Queens",
+      "image": "cards/9.png"
     }
   ]
 }
