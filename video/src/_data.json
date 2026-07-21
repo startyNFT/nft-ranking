@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "July",
-    "day": 14,
-    "ordinal": "th",
+    "day": 21,
+    "ordinal": "st",
     "year": 2026
   },
   "cards": [
@@ -12,35 +12,35 @@
       "image": "cards/1.jpg"
     },
     {
-      "name": "Celestine Sloths",
-      "image": "cards/2.png"
+      "name": "Und. Necropolis",
+      "image": "cards/2.jpeg"
     },
     {
-      "name": "GATA Pixels",
+      "name": "Celestine Sloths",
       "image": "cards/3.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Sausagaze",
       "image": "cards/4.png"
     },
     {
-      "name": "Und. Necropolis",
-      "image": "cards/5.jpeg"
+      "name": "Mad Scientists",
+      "image": "cards/5.png"
     },
     {
-      "name": "Migration",
+      "name": "The WadSquad",
       "image": "cards/6.png"
     },
     {
-      "name": "Horde of The Undead",
-      "image": "cards/7.png"
+      "name": "Expedition",
+      "image": "cards/7.jpg"
     },
     {
-      "name": "Sneaky Stuff",
-      "image": "cards/8.jpg"
+      "name": "Bit Kids",
+      "image": "cards/8.png"
     },
     {
-      "name": "Drama Queens",
+      "name": "Atlas Staking ATOM Early Supporter",
       "image": "cards/9.png"
     }
   ]
