@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "July",
-    "day": 21,
-    "ordinal": "st",
+    "day": 28,
+    "ordinal": "th",
     "year": 2026
   },
   "cards": [
@@ -20,28 +20,28 @@
       "image": "cards/3.png"
     },
     {
-      "name": "Sausagaze",
-      "image": "cards/4.png"
+      "name": "Expedition",
+      "image": "cards/4.jpg"
     },
     {
-      "name": "Mad Scientists",
+      "name": "GATA Pixels",
       "image": "cards/5.png"
     },
     {
-      "name": "The WadSquad",
-      "image": "cards/6.png"
+      "name": "DeFi Geeks",
+      "image": "cards/6.jpg"
     },
     {
-      "name": "Expedition",
-      "image": "cards/7.jpg"
+      "name": "Und. Companions",
+      "image": "cards/7.png"
     },
     {
-      "name": "Bit Kids",
-      "image": "cards/8.png"
+      "name": "Stamps",
+      "image": "cards/8.jpg"
     },
     {
-      "name": "Atlas Staking ATOM Early Supporter",
-      "image": "cards/9.png"
+      "name": "Metamorphosis",
+      "image": "cards/9.jpg"
     }
   ]
 }
