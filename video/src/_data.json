@@ -1,8 +1,8 @@
 {
   "title": "WEEKLY TOP VOLUME",
   "date": {
-    "month": "July",
-    "day": 28,
+    "month": "August",
+    "day": 4,
     "ordinal": "th",
     "year": 2026
   },
@@ -16,32 +16,32 @@
       "image": "cards/2.jpeg"
     },
     {
-      "name": "Celestine Sloths",
-      "image": "cards/3.png"
+      "name": "After the Filter",
+      "image": "cards/3.jpg"
     },
     {
       "name": "Expedition",
       "image": "cards/4.jpg"
     },
     {
-      "name": "GATA Pixels",
+      "name": "Celestine Sloths",
       "image": "cards/5.png"
     },
     {
-      "name": "DeFi Geeks",
-      "image": "cards/6.jpg"
+      "name": "Cosmos Guardians",
+      "image": "cards/6.png"
     },
     {
-      "name": "Und. Companions",
+      "name": "Babu Pengus",
       "image": "cards/7.png"
     },
     {
-      "name": "Stamps",
-      "image": "cards/8.jpg"
+      "name": "Frutopia",
+      "image": "cards/8.png"
     },
     {
-      "name": "Metamorphosis",
-      "image": "cards/9.jpg"
+      "name": "Baaaad Kids",
+      "image": "cards/9.png"
     }
   ]
 }
