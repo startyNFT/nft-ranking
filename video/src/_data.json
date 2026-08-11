@@ -2,7 +2,7 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "August",
-    "day": 4,
+    "day": 11,
     "ordinal": "th",
     "year": 2026
   },
@@ -12,35 +12,35 @@
       "image": "cards/1.jpg"
     },
     {
-      "name": "Und. Necropolis",
-      "image": "cards/2.jpeg"
-    },
-    {
-      "name": "After the Filter",
-      "image": "cards/3.jpg"
-    },
-    {
-      "name": "Expedition",
-      "image": "cards/4.jpg"
+      "name": "GATA Pixels",
+      "image": "cards/2.png"
     },
     {
       "name": "Celestine Sloths",
-      "image": "cards/5.png"
-    },
-    {
-      "name": "Cosmos Guardians",
-      "image": "cards/6.png"
+      "image": "cards/3.png"
     },
     {
       "name": "Babu Pengus",
+      "image": "cards/4.png"
+    },
+    {
+      "name": "Cosmos Guardians",
+      "image": "cards/5.png"
+    },
+    {
+      "name": "Sneaky Animals",
+      "image": "cards/6.jpg"
+    },
+    {
+      "name": "Mad Scientists",
       "image": "cards/7.png"
     },
     {
-      "name": "Frutopia",
+      "name": "Gelotto Series 3",
       "image": "cards/8.png"
     },
     {
-      "name": "Baaaad Kids",
+      "name": "Und. Companions",
       "image": "cards/9.png"
     }
   ]
