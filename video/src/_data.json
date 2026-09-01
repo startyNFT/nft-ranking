@@ -1,46 +1,34 @@
 {
   "title": "WEEKLY TOP VOLUME",
   "date": {
-    "month": "August",
-    "day": 25,
-    "ordinal": "th",
+    "month": "September",
+    "day": 1,
+    "ordinal": "st",
     "year": 2026
   },
   "cards": [
     {
       "name": "Underworld Genesis",
-      "image": "cards/1.png"
-    },
-    {
-      "name": "Bad Kids",
-      "image": "cards/2.jpg"
+      "image": "cards/2.png"
     },
     {
       "name": "Babu Pengus",
       "image": "cards/3.png"
     },
     {
-      "name": "Cosmos Guardians",
-      "image": "cards/4.png"
-    },
-    {
-      "name": "summer is yellow",
+      "name": "Migration",
       "image": "cards/5.png"
     },
     {
-      "name": "Celestine Sloths",
-      "image": "cards/6.png"
-    },
-    {
-      "name": "Mad Scientists",
+      "name": "pool party",
       "image": "cards/7.png"
     },
     {
-      "name": "Sneaky Stuff",
-      "image": "cards/8.jpg"
+      "name": "Und. Companions",
+      "image": "cards/8.png"
     },
     {
-      "name": "Stamps",
+      "name": "Sneaky Stuff",
       "image": "cards/9.jpg"
     }
   ]
