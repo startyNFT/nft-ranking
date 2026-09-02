@@ -7,6 +7,9 @@ const HUB_INDEXER = 'https://marketplace-api.cosmos.stargaze-apis.com';
 // Format: { "Bad Kids": "badkidsnft", ... }. Missing file is fine — tweets will
 // fall back to the collection name.
 const HANDLES_FILE = path.join(__dirname, '..', 'handles.json');
+// Hand-maintained creator handles. Separate from handles.json because
+// snapshot-handles.js rebuilds that file wholesale and would wipe them.
+const CREATORS_FILE = path.join(__dirname, '..', 'creators.json');
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; StargazeBot/1.0)'
@@ -49,11 +52,13 @@ async function fetchRankings() {
   const collections = data?.collections || [];
 
   const handleMap = loadHandleMap();
+  const creatorMap = loadCreatorMap();
 
   return collections.map((c) => ({
     name: c.name,
     collection_addr: c.contractAddress,
     twitter_acct: handleMap.get(c.name?.toLowerCase()) || null,
+    creator: creatorMap.get(c.name?.toLowerCase()) || null,
   }));
 }
 
@@ -68,6 +73,22 @@ function loadHandleMap() {
     console.log(`Loaded ${map.size} handles from ${HANDLES_FILE}`);
   } catch (e) {
     console.log(`handles.json parse failed (${e.message}), continuing without handles`);
+  }
+  return map;
+}
+
+function loadCreatorMap() {
+  const map = new Map();
+  if (!fs.existsSync(CREATORS_FILE)) return map;
+  try {
+    const raw = JSON.parse(fs.readFileSync(CREATORS_FILE, 'utf8'));
+    for (const [name, entry] of Object.entries(raw)) {
+      if (name.startsWith('_') || !entry?.handle) continue; // skip _comment
+      map.set(name.toLowerCase(), { handle: entry.handle.replace('@', ''), display: entry.display || null });
+    }
+    console.log(`Loaded ${map.size} creator overrides from ${CREATORS_FILE}`);
+  } catch (e) {
+    console.log(`creators.json parse failed (${e.message}), continuing without creator overrides`);
   }
   return map;
 }
@@ -379,6 +400,7 @@ async function main() {
   // can be disambiguated in the tweet with the collection name.
   const handleCounts = {};
   for (const c of rankings) {
+    if (c.creator) continue; // its line already carries the collection name
     if (c.twitter_acct) {
       const h = c.twitter_acct.replace('@', '').toLowerCase();
       handleCounts[h] = (handleCounts[h] || 0) + 1;
@@ -390,6 +412,7 @@ async function main() {
     const name = collection.name;
     ranking[i + 1] = name;
     const twitter = collection.twitter_acct;
+    const creator = collection.creator;
     const collectionAddr = collection.collection_addr;
 
     console.log(`\nProcessing ${i + 1}. ${name} (${collectionAddr})`);
@@ -398,7 +421,11 @@ async function main() {
     // append the collection name so each line is unambiguous.
     const prefix = i < 3 ? `${medals[i]} ` : '✦ ';
     let handle;
-    if (twitter) {
+    if (creator) {
+      // The handle is a person/studio, not the collection's own account, so lead
+      // with the collection and credit the creator after it.
+      handle = `${creator.display || name} ( @${creator.handle} )`;
+    } else if (twitter) {
       const at = `@${twitter.replace('@', '')}`;
       const shared = handleCounts[twitter.replace('@', '').toLowerCase()] > 1;
       handle = shared ? `${at} (${name})` : at;
