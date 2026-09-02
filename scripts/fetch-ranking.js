@@ -12,11 +12,19 @@ const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; StargazeBot/1.0)'
 };
 
-// Get date range for the week (Tuesday to Monday)
+// A single dud token used to cost us the whole collection, so try a few
+// different random tokens from the same collection before giving up.
+const MAX_TOKEN_ATTEMPTS = 4;
+
+// Get date range for the week (Tuesday to Monday).
+// The cron fires Tuesday 01:00 UTC, but this resolves the most recent COMPLETED
+// Monday from any weekday, so a manual re-run later in the week still targets —
+// and overwrites — the same week folder instead of inventing a shifted one.
 function getWeekRange() {
   const now = new Date();
   const monday = new Date(now);
-  monday.setDate(now.getDate() - 1); // Yesterday was Monday
+  const daysSinceMonday = ((now.getDay() + 6) % 7) || 7; // on a Monday, use the previous one
+  monday.setDate(now.getDate() - daysSinceMonday);
 
   const tuesday = new Date(monday);
   tuesday.setDate(monday.getDate() - 6); // 6 days before Monday
@@ -64,56 +72,61 @@ function loadHandleMap() {
   return map;
 }
 
-// Fetch a random NFT image from a Cosmos Hub collection via the indexer.
-async function fetchNFTImage(collectionAddr) {
+// Fetch the token list for a Cosmos Hub collection from the indexer.
+async function fetchTokens(collectionAddr) {
   try {
     const url = `${HUB_INDEXER}/api/v1/tokens/${collectionAddr}?limit=50&offset=0&includeAll=true`;
-    const response = await fetch(url, { headers: HEADERS });
+    const response = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(20000) });
     if (!response.ok) {
       console.log(`Hub indexer tokens error for ${collectionAddr}: ${response.status}`);
-      return null;
+      return [];
     }
-
     const data = await response.json();
-    const tokens = data?.tokens || [];
-
-    if (tokens.length === 0) {
-      console.log(`No tokens found for ${collectionAddr}`);
-      return null;
-    }
-
-    const randomToken = tokens[Math.floor(Math.random() * tokens.length)];
-    const media = randomToken?.media || {};
-    const mediaType = media.type;
-    const mediaUrl = media.url;
-    // For non-image media (vector_graphic / video / html), prefer the indexer's
-    // rasterized staticUrl — it returns a real .webp snapshot. Falls back to
-    // the original IPFS url for plain images.
-    const staticUrl = media?.visualAssets?.xl?.staticUrl
-                   || media?.visualAssets?.lg?.staticUrl
-                   || media.fallbackUrl;
-    const isImage = !mediaType || mediaType === 'image';
-    const imageUrl = isImage ? (mediaUrl || staticUrl) : (staticUrl || mediaUrl);
-
-    if (!imageUrl) {
-      console.log(`Token ${randomToken?.tokenId} has no usable media url`);
-      return null;
-    }
-
-    console.log(`Found image for token ${randomToken?.tokenId}: ${imageUrl} (media type: ${mediaType || 'standard'})`);
-    return { imageUrl, mediaType, mediaUrl, staticUrl, isImage };
+    return data?.tokens || [];
   } catch (error) {
-    console.error(`Error fetching NFT for ${collectionAddr}:`, error.message);
-    return null;
+    console.error(`Error fetching tokens for ${collectionAddr}:`, error.message);
+    return [];
   }
+}
+
+// Pull the usable media urls off one token.
+function mediaFromToken(token) {
+  const media = token?.media || {};
+  const mediaType = media.type;
+  const mediaUrl = media.url;
+  // The indexer's signed imgproxy snapshot. This is the only source that is
+  // reliably fetchable from CI — see downloadCover — so we keep it for every
+  // media type, not just the non-image ones.
+  const staticUrl = media?.visualAssets?.xl?.staticUrl
+                 || media?.visualAssets?.lg?.staticUrl
+                 || media.fallbackUrl;
+  const isImage = !mediaType || mediaType === 'image';
+  const imageUrl = isImage ? (mediaUrl || staticUrl) : (staticUrl || mediaUrl);
+  if (!imageUrl) return null;
+  return { tokenId: token?.tokenId, imageUrl, mediaType, mediaUrl, staticUrl, isImage };
+}
+
+// Shuffle a copy so successive attempts land on different tokens.
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 // Try IPFS gateways for a given URL. Cosmos Hub indexer media lives on
 // ipfs.rscdn.art; legacy Stargaze links may still point at ipfs-gw.stargaze-apis.com.
+// NOTE (2026-09-02): ipfs.rscdn.art now sits behind a Cloudflare challenge and
+// answers 403 to every non-browser client, and the public gateways below are
+// rate-limited to the point of uselessness from a CI runner. These hops are a
+// last resort — the signed i.rscdn.art staticUrl in downloadCover is the real path.
 function getGatewayUrls(url) {
   const candidates = [url];
   const legacyHosts = ['ipfs.rscdn.art', 'ipfs-gw.stargaze-apis.com'];
-  const fallbacks = ['cloudflare-ipfs.com', 'ipfs.io', 'gateway.pinata.cloud'];
+  // cloudflare-ipfs.com was retired upstream and no longer resolves — dropped.
+  const fallbacks = ['gateway.pinata.cloud', 'ipfs.io', 'dweb.link'];
   for (const legacy of legacyHosts) {
     if (url.includes(legacy)) {
       for (const fb of fallbacks) candidates.push(url.replace(legacy, fb));
@@ -175,7 +188,7 @@ async function downloadImage(url, filepath) {
         console.log(`Trying: ${gatewayUrl}`);
         const response = await fetch(gatewayUrl, {
           headers: HEADERS,
-          timeout: 10000
+          signal: AbortSignal.timeout(15000)
         });
 
         if (!response.ok) {
@@ -241,7 +254,7 @@ async function downloadDirectImage(url, filepath) {
       console.log(`Downloading PNG: ${gatewayUrl}`);
       const response = await fetch(gatewayUrl, {
         headers: HEADERS,
-        timeout: 10000
+        signal: AbortSignal.timeout(15000)
       });
       if (response.ok) {
         const buffer = await response.arrayBuffer();
@@ -255,6 +268,49 @@ async function downloadDirectImage(url, filepath) {
   }
   console.error(`All gateways failed for PNG: ${url}`);
   return false;
+}
+
+// Download one cover for a ranked collection. Returns true on success.
+// Order matters: the signed imgproxy staticUrl goes FIRST for every media type.
+// It is the only source that reliably answers 200 from CI — the raw ipfs.rscdn.art
+// host is Cloudflare-gated (403) and the public gateways rate-limit — and this
+// ordering is what stopped plain-image collections dropping out of the grid.
+async function downloadCover(candidate, imagesDir, rank, safeName) {
+  const { imageUrl, mediaType, mediaUrl, staticUrl } = candidate;
+
+  // imgproxy snapshot -> re-encode to PNG locally. It serves webp and the URL is
+  // signed, so we can't ask the proxy for another format, and we never ship webp.
+  if (staticUrl) {
+    console.log(`Using rasterized staticUrl (${mediaType || 'standard'})`);
+    const tmpPath = path.join(imagesDir, `${rank}_${safeName}.tmp`);
+    const finalPath = path.join(imagesDir, `${rank}_${safeName}.png`);
+    if (await downloadDirectImage(staticUrl, tmpPath)) {
+      try {
+        await sharp(tmpPath).png().toFile(finalPath);
+        fs.unlinkSync(tmpPath);
+        return true;
+      } catch (e) {
+        console.error(`PNG re-encode failed: ${e.message}`);
+        fs.unlinkSync(tmpPath);
+      }
+    }
+  }
+
+  // HTML-specific fallback: extract og:image / apple-touch-icon from the page
+  if (mediaType === 'html' && mediaUrl) {
+    console.log(`HTML media, attempting og:image extraction...`);
+    const pngUrl = await extractPngFromMediaUrl(mediaUrl);
+    if (pngUrl) {
+      const filepath = path.join(imagesDir, `${rank}_${safeName}.png`);
+      if (await downloadDirectImage(pngUrl, filepath)) return true;
+    }
+  }
+
+  // Last resort: the original media url straight off the IPFS gateways.
+  const urlPath = new URL(imageUrl).pathname;
+  let ext = path.extname(urlPath) || '.png';
+  if (ext.length > 5) ext = '.png';
+  return await downloadImage(imageUrl, path.join(imagesDir, `${rank}_${safeName}${ext}`));
 }
 
 // NOTE: the Typefully draft is created AFTER the video renders, by
@@ -315,6 +371,10 @@ async function main() {
   // names rather than the punctuation-mangled image filenames.
   const ranking = {};
 
+  // Ranks we failed to get a cover for — reported loudly at the end so a short
+  // week is never mistaken for a clean run.
+  const missing = [];
+
   // Count twitter handles so shared ones (e.g. two collections both @DeFiGeeksNFT)
   // can be disambiguated in the tweet with the collection name.
   const handleCounts = {};
@@ -347,61 +407,32 @@ async function main() {
     }
     tweetLines.push(`${prefix}${handle}`);
 
-    // Download NFT image
-    const result = await fetchNFTImage(collectionAddr);
+    // Download the cover. One dud token used to lose the whole collection: its
+    // slot vanished and every lower-ranked card slid up into the wrong position,
+    // so try several random tokens before writing the collection off.
+    const tokens = await fetchTokens(collectionAddr);
+    const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+    let success = false;
 
-    if (result) {
-      const { imageUrl, mediaType, mediaUrl, staticUrl, isImage } = result;
-      const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
-      let success = false;
+    if (tokens.length === 0) {
+      console.log(`No tokens found for ${name}`);
+    }
+    for (const token of shuffled(tokens).slice(0, MAX_TOKEN_ATTEMPTS)) {
+      const candidate = mediaFromToken(token);
+      if (!candidate) continue;
+      console.log(`Token ${candidate.tokenId}: ${candidate.imageUrl} (media type: ${candidate.mediaType || 'standard'})`);
+      success = await downloadCover(candidate, imagesDir, i + 1, safeName);
+      if (success) break;
+      console.log(`Token ${candidate.tokenId} failed — trying another token`);
+    }
 
-      // Non-image media (vector_graphic / video / html): use the indexer's
-      // rasterized staticUrl, then re-encode to PNG locally. The proxy URL is
-      // signed so we can't ask it for a different format.
-      if (!isImage && staticUrl) {
-        console.log(`Non-image media (${mediaType}), using rasterized staticUrl`);
-        const tmpPath = path.join(imagesDir, `${i + 1}_${safeName}.tmp`);
-        const finalPath = path.join(imagesDir, `${i + 1}_${safeName}.png`);
-        if (await downloadDirectImage(staticUrl, tmpPath)) {
-          try {
-            await sharp(tmpPath).png().toFile(finalPath);
-            fs.unlinkSync(tmpPath);
-            success = true;
-          } catch (e) {
-            console.error(`PNG re-encode failed: ${e.message}`);
-            fs.unlinkSync(tmpPath);
-          }
-        }
-      }
-
-      // HTML-specific fallback: extract og:image / apple-touch-icon from the page
-      if (!success && mediaType === 'html' && mediaUrl) {
-        console.log(`HTML media, attempting og:image extraction...`);
-        const pngUrl = await extractPngFromMediaUrl(mediaUrl);
-        if (pngUrl) {
-          const filepath = path.join(imagesDir, `${i + 1}_${safeName}.png`);
-          success = await downloadDirectImage(pngUrl, filepath);
-        }
-      }
-
-      // Final fallback: download imageUrl directly (handles plain images and
-      // catches anything the prior paths missed)
-      if (!success) {
-        const urlPath = new URL(imageUrl).pathname;
-        let ext = path.extname(urlPath) || '.png';
-        if (ext.length > 5) ext = '.png';
-        const filename = `${i + 1}_${safeName}${ext}`;
-        const filepath = path.join(imagesDir, filename);
-        success = await downloadImage(imageUrl, filepath);
-      }
-
-      if (success) {
-        const base = `${i + 1}_${safeName}`;
-        const saved = fs.readdirSync(imagesDir).find(f => f.startsWith(base));
-        console.log(`Saved: ${saved}`);
-      }
+    if (success) {
+      const base = `${i + 1}_${safeName}`;
+      const saved = fs.readdirSync(imagesDir).find(f => f.startsWith(base));
+      console.log(`Saved: ${saved}`);
     } else {
-      console.log(`No image found for ${name}`);
+      missing.push(`${i + 1}. ${name}`);
+      console.error(`NO COVER for ${i + 1}. ${name}`);
     }
   }
 
@@ -422,6 +453,13 @@ async function main() {
 
   // Update README
   updateReadme(weekRange);
+
+  if (missing.length) {
+    console.error(`\n⚠ MISSING ${missing.length} of ${rankings.length} covers:`);
+    for (const m of missing) console.error(`   - ${m}`);
+    console.error('The video build refuses to render a partial grid, so the draft');
+    console.error('falls back to text-only and the run is marked failed.\n');
+  }
 
   console.log('Done!');
 }

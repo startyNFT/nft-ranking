@@ -65,3 +65,15 @@ jobs:
           git add -A
           git diff --staged --quiet || git commit -m "Update weekly ranking - $(date +'%Y-%m-%d')"
           git push
+
+      # Last step on purpose: everything above has already committed and drafted,
+      # so Robin still has something to post. This only turns the run red, which
+      # is the signal that a cover is missing and the week needs a manual re-run.
+      - name: Verify all 9 covers were fetched
+        if: always()
+        run: |
+          WEEK_DIR="$(ls -d images/*/ | head -1)"
+          COUNT="$(ls "$WEEK_DIR" | grep -Eic '\.(png|jpe?g|webp|gif)$' || true)"
+          echo "$COUNT cover images in $WEEK_DIR"
+          ls "$WEEK_DIR"
+          test "$COUNT" -ge 9

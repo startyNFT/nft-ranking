@@ -64,8 +64,14 @@ function main() {
     .filter((f) => IMG_RE.test(f))
     .sort((a, b) => (parseInt(a, 10) || 99) - (parseInt(b, 10) || 99));
 
+  // Hard stop, not a warning: with a short list every card slides up into a
+  // higher rank slot, so a 6-cover week renders #2 in the #1 position and ships
+  // a confidently wrong ranking. Better no video than a wrong one — the render
+  // step is continue-on-error, so post-draft falls back to a text-only draft.
   if (files.length < 9) {
-    console.warn(`Warning: only ${files.length} cover images found (expected 9).`);
+    throw new Error(
+      `Only ${files.length} cover images in ${weekDir} (expected 9). Refusing to render a partial grid.`
+    );
   }
 
   // rank -> real collection name (written by fetch-ranking.js). When present we use

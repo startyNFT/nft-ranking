@@ -8,6 +8,10 @@
   },
   "cards": [
     {
+      "name": "Bad Kids",
+      "image": "cards/1.png"
+    },
+    {
       "name": "Underworld Genesis",
       "image": "cards/2.png"
     },
@@ -16,8 +20,16 @@
       "image": "cards/3.png"
     },
     {
+      "name": "Celestine Sloths",
+      "image": "cards/4.png"
+    },
+    {
       "name": "Migration",
       "image": "cards/5.png"
+    },
+    {
+      "name": "Und. Necropolis",
+      "image": "cards/6.png"
     },
     {
       "name": "pool party",
