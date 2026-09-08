@@ -6,7 +6,7 @@ Automated weekly top volume NFT collections on Stargaze (Cosmos Hub).
 
 The `images/` folder contains NFT images from the top collections each week.
 
-**Current Week:** Aug 25 - Aug 31
+**Current Week:** Sep 1 - Sep 7
 
 ---
 
