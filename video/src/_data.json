@@ -2,7 +2,7 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "September",
-    "day": 8,
+    "day": 15,
     "ordinal": "th",
     "year": 2026
   },
@@ -12,35 +12,35 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Cosmos",
       "image": "cards/2.png"
     },
     {
-      "name": "The Land of Cakes",
+      "name": "Und. Necropolis",
       "image": "cards/3.png"
     },
     {
-      "name": "Expedition",
+      "name": "Underworld Genesis",
       "image": "cards/4.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Metamorphosis",
       "image": "cards/5.png"
     },
     {
-      "name": "After the Filter",
+      "name": "Migration",
       "image": "cards/6.png"
     },
     {
-      "name": "Cosmos Guardians",
+      "name": "Celestine Sloths",
       "image": "cards/7.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "PengOnes",
       "image": "cards/8.png"
     },
     {
-      "name": "Onchain OMies",
+      "name": "Und. Companions",
       "image": "cards/9.png"
     }
   ]
