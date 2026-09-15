@@ -1,4 +1,6 @@
 {
   "_comment": "Manual creator-handle overrides. Kept OUT of handles.json on purpose: scripts/snapshot-handles.js rebuilds that file wholesale from Metabase + the team Sheet, so anything hand-added there is wiped on the next snapshot. Keys are collection names, matched case-insensitively, and win over handles.json. These render as 'Collection Name ( @handle )' rather than a bare '@handle' because the account belongs to the creator, not to the collection — a bare @creator gives a reader no idea which collection placed. Optional 'display' fixes up the collection's on-chain casing.",
-  "pool party": { "handle": "Nczargar", "display": "Pool Party" }
+  "pool party": { "handle": "Nczargar", "display": "Pool Party" },
+  "cosmos": { "handle": "pARTy_in_Cosmos", "display": "Cosmos" },
+  "migration": { "handle": "pARTy_in_Cosmos", "display": "Migration" }
 }
