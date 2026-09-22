@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "September",
-    "day": 15,
-    "ordinal": "th",
+    "day": 22,
+    "ordinal": "nd",
     "year": 2026
   },
   "cards": [
@@ -12,11 +12,11 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Cosmos",
+      "name": "Celestine Sloths",
       "image": "cards/2.png"
     },
     {
-      "name": "Und. Necropolis",
+      "name": "Hyperion",
       "image": "cards/3.png"
     },
     {
@@ -24,23 +24,23 @@
       "image": "cards/4.png"
     },
     {
-      "name": "Metamorphosis",
+      "name": "Cosmos",
       "image": "cards/5.png"
     },
     {
-      "name": "Migration",
+      "name": "Mad Scientists",
       "image": "cards/6.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Expedition",
       "image": "cards/7.png"
     },
     {
-      "name": "PengOnes",
+      "name": "pool party",
       "image": "cards/8.png"
     },
     {
-      "name": "Und. Companions",
+      "name": "GATA Pixels",
       "image": "cards/9.png"
     }
   ]
