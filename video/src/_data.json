@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "September",
-    "day": 22,
-    "ordinal": "nd",
+    "day": 29,
+    "ordinal": "th",
     "year": 2026
   },
   "cards": [
@@ -12,35 +12,35 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Cosmos",
       "image": "cards/2.png"
     },
     {
-      "name": "Hyperion",
+      "name": "Universe Within",
       "image": "cards/3.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Glitch Candies GEN2",
       "image": "cards/4.png"
     },
     {
-      "name": "Cosmos",
+      "name": "Underworld Genesis",
       "image": "cards/5.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Expedition",
       "image": "cards/6.png"
     },
     {
-      "name": "Expedition",
+      "name": "Diorama Cosmos",
       "image": "cards/7.png"
     },
     {
-      "name": "pool party",
+      "name": "The Sky We Carry",
       "image": "cards/8.png"
     },
     {
-      "name": "GATA Pixels",
+      "name": "Silent Orbits",
       "image": "cards/9.png"
     }
   ]
