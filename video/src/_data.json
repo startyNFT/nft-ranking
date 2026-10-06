@@ -1,46 +1,46 @@
 {
   "title": "WEEKLY TOP VOLUME",
   "date": {
-    "month": "September",
-    "day": 29,
+    "month": "October",
+    "day": 6,
     "ordinal": "th",
     "year": 2026
   },
   "cards": [
     {
-      "name": "Bad Kids",
+      "name": "Underworld Genesis",
       "image": "cards/1.png"
     },
     {
-      "name": "Cosmos",
+      "name": "Und. Necropolis",
       "image": "cards/2.png"
     },
     {
-      "name": "Universe Within",
+      "name": "Cosmos",
       "image": "cards/3.png"
     },
     {
-      "name": "Glitch Candies GEN2",
+      "name": "Und. Companions",
       "image": "cards/4.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Bad Kids",
       "image": "cards/5.png"
     },
     {
-      "name": "Expedition",
+      "name": "Celestine Sloths",
       "image": "cards/6.png"
     },
     {
-      "name": "Diorama Cosmos",
+      "name": "Stamps",
       "image": "cards/7.png"
     },
     {
-      "name": "The Sky We Carry",
+      "name": "Mad Scientists",
       "image": "cards/8.png"
     },
     {
-      "name": "Silent Orbits",
+      "name": "Pixel Wizards",
       "image": "cards/9.png"
     }
   ]
