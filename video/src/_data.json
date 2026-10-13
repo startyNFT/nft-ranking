@@ -2,45 +2,45 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "October",
-    "day": 6,
+    "day": 13,
     "ordinal": "th",
     "year": 2026
   },
   "cards": [
     {
-      "name": "Underworld Genesis",
+      "name": "Bad Kids",
       "image": "cards/1.png"
     },
     {
-      "name": "Und. Necropolis",
+      "name": "Migration",
       "image": "cards/2.png"
     },
     {
-      "name": "Cosmos",
+      "name": "Underworld Genesis",
       "image": "cards/3.png"
     },
     {
-      "name": "Und. Companions",
+      "name": "Celestine Sloths",
       "image": "cards/4.png"
     },
     {
-      "name": "Bad Kids",
+      "name": "Cosmos",
       "image": "cards/5.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Metamorphosis",
       "image": "cards/6.png"
     },
     {
-      "name": "Stamps",
+      "name": "Mad Scientists",
       "image": "cards/7.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Expedition",
       "image": "cards/8.png"
     },
     {
-      "name": "Pixel Wizards",
+      "name": "Sneaky Stuff",
       "image": "cards/9.png"
     }
   ]
