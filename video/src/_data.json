@@ -2,7 +2,7 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "October",
-    "day": 13,
+    "day": 20,
     "ordinal": "th",
     "year": 2026
   },
@@ -12,11 +12,11 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Migration",
+      "name": "Cosmos",
       "image": "cards/2.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Metamorphosis",
       "image": "cards/3.png"
     },
     {
@@ -24,23 +24,23 @@
       "image": "cards/4.png"
     },
     {
-      "name": "Cosmos",
+      "name": "GATA Pixels",
       "image": "cards/5.png"
     },
     {
-      "name": "Metamorphosis",
+      "name": "Underworld Genesis",
       "image": "cards/6.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Sparkle Pets",
       "image": "cards/7.png"
     },
     {
-      "name": "Expedition",
+      "name": "Mad Scientists",
       "image": "cards/8.png"
     },
     {
-      "name": "Sneaky Stuff",
+      "name": "The Dark Citadel",
       "image": "cards/9.png"
     }
   ]
