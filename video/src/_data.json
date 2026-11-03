@@ -1,9 +1,9 @@
 {
   "title": "WEEKLY TOP VOLUME",
   "date": {
-    "month": "October",
-    "day": 27,
-    "ordinal": "th",
+    "month": "November",
+    "day": 3,
+    "ordinal": "rd",
     "year": 2026
   },
   "cards": [
@@ -12,11 +12,11 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "Migration",
       "image": "cards/2.png"
     },
     {
-      "name": "The Dark Citadel",
+      "name": "Und. Necropolis",
       "image": "cards/3.png"
     },
     {
@@ -28,19 +28,19 @@
       "image": "cards/5.png"
     },
     {
-      "name": "Cosmos Spirit Animal Kingdom",
+      "name": "Yield Crocs",
       "image": "cards/6.png"
     },
     {
-      "name": "Metamorphosis",
+      "name": "Celestine Sloths",
       "image": "cards/7.png"
     },
     {
-      "name": "Und. Necropolis",
+      "name": "Und. Companions",
       "image": "cards/8.png"
     },
     {
-      "name": "Cosmos",
+      "name": "Expedition",
       "image": "cards/9.png"
     }
   ]
