@@ -2,8 +2,8 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "November",
-    "day": 3,
-    "ordinal": "rd",
+    "day": 10,
+    "ordinal": "th",
     "year": 2026
   },
   "cards": [
@@ -12,35 +12,35 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Migration",
+      "name": "Underworld Genesis",
       "image": "cards/2.png"
     },
     {
-      "name": "Und. Necropolis",
+      "name": "Celestine Sloths",
       "image": "cards/3.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Und. Necropolis",
       "image": "cards/4.png"
     },
     {
-      "name": "Mad Scientists",
+      "name": "Rekt Bulls",
       "image": "cards/5.png"
     },
     {
-      "name": "Yield Crocs",
+      "name": "After the Filter",
       "image": "cards/6.png"
     },
     {
-      "name": "Celestine Sloths",
+      "name": "GATA Pixels",
       "image": "cards/7.png"
     },
     {
-      "name": "Und. Companions",
+      "name": "Mad Scientists",
       "image": "cards/8.png"
     },
     {
-      "name": "Expedition",
+      "name": "Stamps",
       "image": "cards/9.png"
     }
   ]
