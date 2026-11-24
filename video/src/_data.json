@@ -2,7 +2,7 @@
   "title": "WEEKLY TOP VOLUME",
   "date": {
     "month": "November",
-    "day": 17,
+    "day": 24,
     "ordinal": "th",
     "year": 2026
   },
@@ -12,27 +12,27 @@
       "image": "cards/1.png"
     },
     {
-      "name": "Und. Necropolis",
+      "name": "Sneaky Animals",
       "image": "cards/2.png"
     },
     {
-      "name": "Underworld Genesis",
+      "name": "Celestine Sloths",
       "image": "cards/3.png"
     },
     {
-      "name": "Und. Companions",
+      "name": "Mad Scientists",
       "image": "cards/4.png"
     },
     {
-      "name": "Migration",
+      "name": "Stamps",
       "image": "cards/5.png"
     },
     {
-      "name": "Metamorphosis",
+      "name": "After the Filter",
       "image": "cards/6.png"
     },
     {
-      "name": "Sneaky Animals",
+      "name": "Pixel Wizards",
       "image": "cards/7.png"
     },
     {
@@ -40,7 +40,7 @@
       "image": "cards/8.png"
     },
     {
-      "name": "Sneaky Stuff",
+      "name": "The Dark Citadel",
       "image": "cards/9.png"
     }
   ]
